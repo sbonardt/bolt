@@ -602,7 +602,7 @@ class Extensions
 
         // Was: $type, $location, $callback, $extensionname, $additionalhtml = '', $defer = true, $cacheduration = 180, $extraparameters = ""
 
-        dump($options);
+        // dump($options);
 
         // $authSession = $this->app['session']->get('authentication');
         // $sessionkey = $authSession->getToken()->getToken();
@@ -622,7 +622,7 @@ class Extensions
     public function renderWidgetHolder($type, $location)
     {
 
-        dump($this->widgetqueue);
+        // dump($this->widgetqueue);
 
         if (is_array($this->widgetqueue)) {
             foreach ($this->widgetqueue as $widget) {
