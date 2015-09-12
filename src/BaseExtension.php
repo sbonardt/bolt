@@ -482,7 +482,7 @@ abstract class BaseExtension implements ExtensionInterface
 
     /**
      * Clear all previously added assets.
-     * 
+     *
      * @deprecated since 2.3 and will be removed in Bolt 3
      */
     public function clearAssets()
@@ -636,9 +636,16 @@ abstract class BaseExtension implements ExtensionInterface
      *
      * @internal param string $name
      */
-    public function addWidget($type, $location, $callback, $additionalhtml = "", $defer = true, $cacheduration = 180, $var1 = "", $var2 = "", $var3 = "")
+    public function addWidget($options)
     {
-        $this->app['extensions']->insertWidget($type, $location, $callback, $this->getName(), $additionalhtml, $defer, $cacheduration, $var1, $var2, $var3);
+
+        $options['name'] = $this->getName();
+        $options['slug'] = $this->app['slugify']->slugify($this->getName());
+
+        // dump($options);
+        // was: $type, $location, $callback, $additionalhtml = "", $defer = true, $cacheduration = 180, $var1 = "", $var2 = "", $var3 = ""
+
+        $this->app['extensions']->insertWidget($options);
     }
 
     /**
