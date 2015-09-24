@@ -20,7 +20,7 @@ class OrderHandler
         if ($order === false) {
             return;
         }
-        
+
         if (strpos($order, '-') === 0) {
             $direction = 'DESC';
             $order = substr($order, 1);
