@@ -2,7 +2,6 @@
 namespace Bolt\Tests\Extensions;
 
 use Bolt\Provider\NutServiceProvider;
-use Bolt\Tests\BoltUnitTest;
 
 /**
  * Class to test src/BaseExtension.
