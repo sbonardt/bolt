@@ -10,8 +10,6 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * Class for Bolt's generic library functions.
  *
- * @deprecated Deprecated since 3.0, to be removed in 4.0.
- *
  * @author Gawain Lynch <gawain.lynch@gmail.com>
  */
 class Library
@@ -26,9 +24,9 @@ class Library
     public static function formatFilesize($size)
     {
         if ($size > 1024 * 1024) {
-            return sprintf('%0.2f MiB', ($size / 1024 / 1024));
+            return sprintf("%0.2f MiB", ($size / 1024 / 1024));
         } elseif ($size > 1024) {
-            return sprintf('%0.2f KiB', ($size / 1024));
+            return sprintf("%0.2f KiB", ($size / 1024));
         } else {
             return $size . ' B';
         }
@@ -39,7 +37,7 @@ class Library
      *
      * @param string $size
      *
-     * @return double
+     * @return integer
      */
     public static function filesizeToBytes($size)
     {
@@ -82,13 +80,25 @@ class Library
     public static function safeFilename($filename)
     {
         $filename = rawurlencode($filename); // Use 'rawurlencode', because we prefer '%20' over '+' for spaces.
-        $filename = str_replace('%2F', '/', $filename);
+        $filename = str_replace("%2F", "/", $filename);
 
-        if (substr($filename, 0, 1) == '/') {
+        if (substr($filename, 0, 1) == "/") {
             $filename = substr($filename, 1);
         }
 
         return $filename;
+    }
+
+    /**
+     * @param object $obj
+     *
+     * @return array
+     *
+     * @deprecated
+     */
+    public static function hackislyParseRegexTemplates($obj)
+    {
+        return self::parseTwigTemplates($obj);
     }
 
     /**
@@ -108,7 +118,7 @@ class Library
 
         preg_match_all('| => (.+\.twig)|i', $str, $matches);
 
-        $templates = [];
+        $templates = array();
 
         foreach ($matches[1] as $match) {
             $templates[] = str_replace($app['resources']->getPath('rootpath'), '', $match);
@@ -126,16 +136,16 @@ class Library
      *
      * @return string
      */
-    public static function path($path, $param = [], $add = '')
+    public static function path($path, $param = array(), $add = '')
     {
         $app = ResourceManager::getApp();
 
-        if (!empty($add) && $add[0] != '?') {
-            $add = '?' . $add;
+        if (!empty($add) && $add[0] != "?") {
+            $add = "?" . $add;
         }
 
         if (empty($param)) {
-            $param = [];
+            $param = array();
         }
 
         return $app['url_generator']->generate($path, $param) . $add;
@@ -150,9 +160,48 @@ class Library
      *
      * @return \Symfony\Component\HttpFoundation\RedirectResponse
      */
-    public static function redirect($path, $param = [], $add = '')
+    public static function redirect($path, $param = array(), $add = '')
     {
-        return ResourceManager::getApp()->redirect(self::path($path, $param, $add));
+        $app = ResourceManager::getApp();
+
+        // If the user doesn't have access to the backend, redirect them to the frontend
+        if ($path === 'dashboard' && $app['users']->isValidSession() && !$app['users']->isAllowed('dashboard')) {
+            $app['session']->getFlashBag()->clear();
+            $path = 'homepage';
+        }
+
+        // Only set the 'retreat' when redirecting to 'login' but not FROM logout.
+        if (($path === 'login') && ($app['request']->get('_route') !== 'logout')) {
+            $app['session']->set(
+                'retreat',
+                array(
+                    'route'  => $app['request']->get('_route'),
+                    'params' => $app['request']->get('_route_params')
+                )
+            );
+        } else {
+            $app['session']->set('retreat', '');
+        }
+
+        return $app->redirect(self::path($path, $param, $add));
+    }
+
+    /**
+     * Get an array of the query parameters
+     * 
+     * @internal
+     *
+     * @param string $url
+     *
+     * @return array
+     */
+    public static function getQueryParameters($url)
+    {
+        $parsedUrl = parse_url($url);
+        parse_str($parsedUrl['query'], $parameters);
+        $parameters = array_diff($parameters, array(''));
+
+        return $parameters;
     }
 
     /**
@@ -168,7 +217,7 @@ class Library
         $app = ResourceManager::getApp();
 
         if (empty($path)) {
-            $path = '/';
+            $path = "/";
         }
         header("location: $path");
         echo "<p>Redirecting to <a href='$path'>$path</a>.</p>";
@@ -195,7 +244,7 @@ class Library
      */
     public static function loadSerialize($filename, $silent = false)
     {
-        if (!is_readable($filename)) {
+        if (! is_readable($filename)) {
             if ($silent) {
                 return false;
             }
@@ -208,7 +257,7 @@ class Library
                 '<pre>' . htmlspecialchars($filename) . '</pre>' .
                 '<p>' . str_replace('<a>', '<a href="javascript:history.go(-1)">', $part) . '</p>';
 
-            throw new LowlevelException(Translator::__('File is not readable!' . $message));
+            throw new LowlevelException(Translator::__('File is not readable!'), $message);
         }
 
         $serializedData = trim(implode('', file($filename)));
@@ -266,6 +315,7 @@ class Library
         // open the file and lock it.
         if ($fp = fopen($filename, 'a')) {
             if (flock($fp, LOCK_EX | LOCK_NB)) {
+
                 // Truncate the file (since we opened it for 'appending')
                 ftruncate($fp, 0);
 
@@ -279,7 +329,7 @@ class Library
 
                     $message = 'Error opening file<br/><br/>' .
                         'The file <b>' . $filename . '</b> could not be written! <br /><br />' .
-                        'Try logging in with your FTP client and check to see if it is chmodded to be readable by ' .
+                        'Try logging in with your ftp-client and check to see if it is chmodded to be readable by ' .
                         'the webuser (ie: 777 or 766, depending on the setup of your server). <br /><br />' .
                         'Current path: ' . getcwd() . '.';
                     throw new LowlevelException($message);
@@ -289,7 +339,7 @@ class Library
 
                 $message = 'Error opening file<br/><br/>' .
                     'Could not lock <b>' . $filename . '</b> for writing! <br /><br />' .
-                    'Try logging in with your FTP client and check to see if it is chmodded to be readable by the ' .
+                    'Try logging in with your ftp-client and check to see if it is chmodded to be readable by the ' .
                     'webuser (ie: 777 or 766, depending on the setup of your server). <br /><br />' .
                     'Current path: ' . getcwd() . '.';
                 throw new LowlevelException($message);
@@ -297,7 +347,7 @@ class Library
         } else {
             $message = 'Error opening file<br/><br/>' .
                 'The file <b>' . $filename . '</b> could not be opened for writing! <br /><br />' .
-                'Try logging in with your FTP client and check to see if it is chmodded to be readable by the ' .
+                'Try logging in with your ftp-client and check to see if it is chmodded to be readable by the ' .
                 'webuser (ie: 777 or 766, depending on the setup of your server). <br /><br />' .
                 'Current path: ' . getcwd() . '.';
             throw new LowlevelException($message);

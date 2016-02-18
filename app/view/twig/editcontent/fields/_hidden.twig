@@ -15,13 +15,7 @@
 
 {#=== FIELDSET =======================================================================================================#}
 
-{% extends '@bolt/_base/_fieldset.twig' %}
-
-{% block fieldset_type 'hidden' %}
-
-{% block fieldset_controls %}
-
+<fieldset class="text">
     <!-- {{ (option.info) ? macro.infopop(labelkey , option.info) :labelkey }} -->
     <input{{ macro.attr(attr_text) }}>
-
-{% endblock fieldset_controls %}
+</fieldset>

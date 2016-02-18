@@ -8,22 +8,46 @@ use Composer\Json\JsonFile;
 use Composer\Json\JsonManipulator;
 use Composer\Package\Version\VersionParser;
 use Composer\Package\Version\VersionSelector;
+use Composer\Repository\CompositeRepository;
+use Composer\Repository\PlatformRepository;
+use Silex\Application;
 
 /**
  * Composer require package class.
  *
  * @author Gawain Lynch <gawain.lynch@gmail.com>
  */
-final class RequirePackage extends BaseAction
+final class RequirePackage
 {
-    /** @var \Composer\Package\Version\VersionSelector */
+    /**
+     * @var \Silex\Application
+     */
+    private $app;
+
+    /**
+     * @var \Composer\Package\Version\VersionSelector
+     */
     private $versionSelector;
+
+    /**
+     * @var \Composer\Repository\RepositoryInterface
+     */
+    private $repos;
+
+    /**
+     * @param $app \Silex\Application
+     */
+    public function __construct(Application $app)
+    {
+        $this->app = $app;
+        $this->versionSelector = new VersionSelector($this->app['extend.manager']->getPool());
+    }
 
     /**
      * Require (install) a package.
      *
      * @param  $package       array Package names and version to require
-     *                        - Format: ['name' => '', 'version' => '']
+     *                        - Format: array('name' => '', 'version' => '')
      *
      * @throws \Bolt\Exception\PackageManagerException
      *
@@ -31,12 +55,12 @@ final class RequirePackage extends BaseAction
      */
     public function execute(array $package)
     {
-        $this->versionSelector = new VersionSelector($this->getPool());
         /** @var $composer \Composer\Composer */
-        $composer = $this->getComposer();
-        $io = $this->getIO();
+        $composer = $this->app['extend.manager']->getComposer();
+        $io = $this->app['extend.manager']->getIO();
+        $options = $this->app['extend.manager']->getOptions();
 
-        $file = $this->getOption('composerjson');
+        $file = $options['composerjson'];
 
         $newlyCreated = !file_exists($file);
 
@@ -53,6 +77,16 @@ final class RequirePackage extends BaseAction
             return 1;
         }
 
+        // Get the Composer repos
+        $repos = $composer->getRepositoryManager()->getRepositories();
+
+        $this->repos = new CompositeRepository(
+            array_merge(
+                array(new PlatformRepository()),
+                $repos
+            )
+        );
+
         // Format the package array
         $package = $this->formatRequirements($package);
 
@@ -63,19 +97,19 @@ final class RequirePackage extends BaseAction
         }
 
         // Get the JSON object
-        $json = new JsonFile($this->getOption('composerjson'));
+        $json = new JsonFile($options['composerjson']);
 
         // Update our JSON file with the selected version until we reset Composer
-        $composerBackup = $this->updateComposerJson($json, $package, false);
+        $composerBackup = $this->updateComposerJson($json, $options, $package, false);
 
         // Reload Composer config
-        $composer = $this->resetComposer();
+        $composer = $this->app['extend.manager']->getFactory()->resetComposer();
 
         // Update our JSON file now with a contraint
-        $this->updateComposerJson($json, $package, true);
+        $this->updateComposerJson($json, $options, $package, true);
 
         // JSON file has been created/updated, if we're not installing, exit
-        if ($this->getOption('noupdate')) {
+        if ($options['noupdate']) {
             return 0;
         }
 
@@ -84,14 +118,14 @@ final class RequirePackage extends BaseAction
 
         try {
             $install
-                ->setVerbose($this->getOption('verbose'))
-                ->setPreferSource($this->getOption('prefersource'))
-                ->setPreferDist($this->getOption('preferdist'))
-                ->setDevMode(!$this->getOption('updatenodev'))
-                ->setUpdate($this->getOption('update'))
+                ->setVerbose($options['verbose'])
+                ->setPreferSource($options['prefersource'])
+                ->setPreferDist($options['preferdist'])
+                ->setDevMode(!$options['updatenodev'])
+                ->setUpdate($options['update'])
                 ->setUpdateWhitelist(array_keys($package))
-                ->setWhitelistDependencies($this->getOption('updatewithdependencies'))
-                ->setIgnorePlatformRequirements($this->getOption('ignoreplatformreqs'));
+                ->setWhitelistDependencies($options['updatewithdependencies'])
+                ->setIgnorePlatformRequirements($options['ignoreplatformreqs']);
 
             $status = $install->run();
             if ($status !== 0) {
@@ -110,7 +144,7 @@ final class RequirePackage extends BaseAction
             file_put_contents($json->getPath(), $composerBackup);
 
             $msg = __CLASS__ . '::' . __FUNCTION__ . ' recieved an error from Composer: ' . $e->getMessage() . ' in ' . $e->getFile() . '::' . $e->getLine();
-            $this->app['logger.system']->critical($msg, ['event' => 'exception', 'exception' => $e]);
+            $this->app['logger.system']->critical($msg, array('event' => 'exception', 'exception' => $e));
             throw new PackageManagerException($e->getMessage(), $e->getCode(), $e);
         }
     }
@@ -119,20 +153,21 @@ final class RequirePackage extends BaseAction
      * Update the JSON file.
      *
      * @param JsonFile $json
+     * @param array    $options
      * @param array    $package
      * @param boolean  $postreset
      *
      * @return string A back up of the current JSON file
      */
-    private function updateComposerJson(JsonFile $json, array $package, $postreset)
+    private function updateComposerJson(JsonFile $json, array $options, array $package, $postreset)
     {
         $composerDefinition = $json->read();
         $composerBackup = file_get_contents($json->getPath());
 
-        $sortPackages = $this->getOption('sortpackages');
-        $requireKey = $this->getOption('dev') ? 'require-dev' : 'require';
-        $removeKey = $this->getOption('dev') ? 'require' : 'require-dev';
-        $baseRequirements = array_key_exists($requireKey, $composerDefinition) ? $composerDefinition[$requireKey] : [];
+        $sortPackages = $options['sortpackages'];
+        $requireKey = $options['dev'] ? 'require-dev' : 'require';
+        $removeKey = $options['dev'] ? 'require' : 'require-dev';
+        $baseRequirements = array_key_exists($requireKey, $composerDefinition) ? $composerDefinition[$requireKey] : array();
 
         if (!$this->updateFileCleanly($json, $package, $requireKey, $removeKey, $sortPackages, $postreset)) {
             foreach ($package as $name => $version) {
@@ -193,7 +228,7 @@ final class RequirePackage extends BaseAction
      */
     protected function formatRequirements(array $packages)
     {
-        $requires = [];
+        $requires = array();
         $packages = $this->normalizeRequirements($packages);
         foreach ($packages as $package) {
             $requires[$package['name']] = $package['version'];
@@ -227,7 +262,7 @@ final class RequirePackage extends BaseAction
      *
      * @return string
      */
-    protected function findBestVersionForPackage($name)
+    private function findBestVersionForPackage($name)
     {
         $package = $this->versionSelector->findBestCandidate($name);
 
@@ -236,7 +271,7 @@ final class RequirePackage extends BaseAction
                 sprintf(
                     'Could not find package %s at any version for your minimum-stability (%s). Check the package spelling or your minimum-stability',
                     $name,
-                    $this->getMinimumStability()
+                    $this->app['extend.manager']->getMinimumStability()
                 )
             );
         }

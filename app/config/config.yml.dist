@@ -86,7 +86,7 @@ homepage_template: index.twig
 # Note 1: The record specified in this parameter must be set to 'published'
 # Note 2: If you are logged on, and debug is set to 'true', you will NOT see the
 #         404 page!
-# Note 3: This may also point to a template without a record, eg 'error404.twig'
+# Note 3: This may also point to a template without a record, eg error404.twig
 notfound: page/not-found
 
 # The default template and amount of records to use for listing-pages on the
@@ -240,8 +240,6 @@ accept_file_types: [ twig, html, js, css, scss, gif, jpg, jpeg, png, ico, zip, t
 #     name: SuperCMS
 #     path: /admin
 #     provided_by: [ supercool@example.org, "Supercool Webdesign Co." ]
-#     news_source: http://news.example.org
-#     news_variable: news
 
 # Show the 'debug' nut in the lower right corner for logged-in user. By default,
 # the debugbar is only shown to logged-in users. Use the 'debug_show_loggedoff'
@@ -289,8 +287,8 @@ wysiwyg:
     underline: false         # Adds a button to underline text, using the `<u>`-tag.
     ruler: false             # Adds a button to add a horizontal ruler, using the `<hr>`-tag.
     strike: false            # Adds a button to add stikethrough, using the `<s>`-tag.
-    blockquote: false        # Allows the user to insert code snippets using `<pre><code>`-tags.
-    codesnippet: false       # Allows the user to insert blockquotes using the `<blockquote>`-tag.
+    blockquote: false        # Allows the user to insert blockquotes using the `<blockquote>`-tag.
+    codesnippet: false       # Allows the user to insert code snippets using `<pre><code>`-tags.
     specialchar: false       # Adds a button to insert special chars like '€' or '™'.
     ck:
         allowedContent: true # If set to 'true', any elements and attributes are allowed in Wysiwg Elements
@@ -317,9 +315,9 @@ liveeditor: true
 #     transport: smtp
 #     spool: true
 #     host: localhost
-#     port: 25
 #     username: username
 #     password: password
+#     port: 25
 #     encryption: null
 #     auth_mode: null
 #     senderMail: null
@@ -356,6 +354,14 @@ cookies_lifetime: 1209600
 # If you'd like it to be valid for all subdomains of 'www.example.org', set this
 # to '.example.org'.
 cookies_domain:
+
+# If your system is using a custom session configuration (such as a Redis
+# handler from a PHP extension) then we need to disable our session storage
+# handler. In that case, set this setting to false.
+# See: http://silex.sensiolabs.org/doc/providers/session.html#custom-session-configurations
+#
+# Do not change this, unless you know what you're doing!
+session_use_storage_handler: true
 
 # The hash_strength determines the amount of iterations for encrypting
 # passwords.

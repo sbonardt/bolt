@@ -2,19 +2,16 @@
 
 namespace Bolt\Filesystem\Plugin;
 
-use Bolt\Filesystem\Filesystem;
-use Bolt\Filesystem\FilesystemInterface;
-use Bolt\Filesystem\PluginInterface;
-use Silex\Application;
+use Bolt\Application;
+use League\Flysystem\Filesystem;
+use League\Flysystem\FilesystemInterface;
+use League\Flysystem\PluginInterface;
 
 abstract class AdapterPlugin implements PluginInterface
 {
     /** @var FilesystemInterface */
     protected $filesystem;
-    /** @var string */
     protected $namespace;
-    /** @var Application */
-    protected $app;
 
     public function __construct(Application $app, $namespace = 'files')
     {
@@ -38,7 +35,7 @@ abstract class AdapterPlugin implements PluginInterface
         $method = 'get' . $this->adapterType() . ucfirst($this->getMethod());
 
         if (method_exists($this, $method)) {
-            return call_user_func_array([$this, $method], $args);
+            return call_user_func_array(array($this, $method), $args);
         }
 
         return $this->getDefault();

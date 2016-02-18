@@ -2,120 +2,205 @@
 
 namespace Bolt;
 
-use Bolt\Filesystem\AggregateFilesystemInterface;
-use Bolt\Filesystem\Exception\IOException;
-use Bolt\Filesystem\FilesystemInterface;
-use Bolt\Filesystem\Handler\HandlerInterface;
+use Bolt\Configuration\ResourceManager;
 use Doctrine\Common\Cache\FilesystemCache;
 
 /**
- * Simple, file based cache for volatile data. Useful for storing non-vital
+ * Simple, file based cache for volatile data.. Useful for storing non-vital
  * information like feeds, and other stuff that can be recovered easily.
  *
- * @author Bob den Otter <bob@twokings.nl>
- * @author Gawain Lynch <gawain.lynch@gmail.com>
+ * @author Bob den Otter, bob@twokings.nl
  */
 class Cache extends FilesystemCache
 {
-    /** Max cache age. Default 10 minutes. */
+    /**
+     * Max cache age. Default 10 minutes.
+     */
     const DEFAULT_MAX_AGE = 600;
-    /** Default cache file extension. */
-    const EXTENSION = '.data';
 
-    /** @var AggregateFilesystemInterface */
-    private $filesystem;
+    /** @var Application */
+    private $app;
 
     /**
-     * Cache constructor.
-     *
-     * @param string                       $directory
-     * @param string                       $extension
-     * @param int                          $umask
-     * @param AggregateFilesystemInterface $filesystem
+     * Default cache file extension.
      */
-    public function __construct($directory, $extension = self::EXTENSION, $umask = 0002, AggregateFilesystemInterface $filesystem = null)
+    private $extension = '.data';
+
+    /**
+     * @var string[] regular expressions for replacing disallowed characters in file name
+     */
+    private $disallowedCharacterPatterns = array(
+        '/\-/', // replaced to disambiguate original `-` and `-` derived from replacements
+        '/[^a-zA-Z0-9\-_\[\]]/' // also excludes non-ascii chars (not supported, depending on FS)
+    );
+
+    /**
+     * @var string[] replacements for disallowed file characters
+     */
+    private $replacementCharacters = array('__', '-');
+
+    /**
+     * Set up the object. Initialize the proper folder for storing the files.
+     *
+     * @param string      $cacheDir
+     * @param Application $app
+     *
+     * @throws \Exception
+     */
+    public function __construct($cacheDir, Application $app)
     {
-        parent::__construct($directory, $extension, $umask);
-        $this->filesystem = $filesystem;
+        $this->app = $app;
+
+        try {
+            parent::__construct($cacheDir, $this->extension);
+
+            // If the Bolt version has changed, flush our cache
+            if (!$this->checkCacheVersion()) {
+                $this->clearCache();
+            }
+        } catch (\Exception $e) {
+            $app['logger.system']->critical($e->getMessage(), array('event' => 'exception', 'exception' => $e));
+            throw $e;
+        }
     }
 
     /**
-     * @deprecated Deprecated since 3.0, to be removed in 4.0. Use doFlush() instead.
+     * Generate a filename for the cached items in our filebased cache.
+     *
+     * The original Doctrine/cache function stored files in folders that
+     * were nested 32 layers deep. In practice this led to cache folders
+     * containing up to 600,000 folders, while containing only about 15,000
+     * cached items. This is a huge overkill. Here, we use only two levels,
+     * which still means each folder will in practice contain only a very
+     * limited amount of files. i.e.: for 15,000 files, there are 256*256
+     * folders, which statstically means one or two files per folder.
+     *
+     * @param string $id
+     *
+     * @return string
      */
-    public function clearCache()
+    protected function getFilename($id)
     {
-        return $this->doFlush();
+        $foldername = implode(str_split(substr(hash('sha256', $id), 0, 4), 2), DIRECTORY_SEPARATOR);
+
+        return $this->directory
+            . DIRECTORY_SEPARATOR
+            . $foldername
+            . DIRECTORY_SEPARATOR
+            . preg_replace($this->disallowedCharacterPatterns, $this->replacementCharacters, $id)
+            . $this->extension;
     }
 
     /**
      * Clear the cache. Both the doctrine FilesystemCache, as well as twig and thumbnail temp files.
      *
-     * @return array
+     * @see clearCacheHelper
      */
-    public function doFlush()
+    public function clearCache()
     {
-        $result = [
+        $result = array(
             'successfiles'   => 0,
             'failedfiles'    => 0,
-            'failed'         => [],
+            'failed'         => array(),
             'successfolders' => 0,
             'failedfolders'  => 0,
-            'log'            => '',
-        ];
+            'log'            => ''
+        );
 
         // Clear Doctrine's folder.
-        parent::doFlush();
+        $this->flushAll();
 
-        if ($this->filesystem instanceof AggregateFilesystemInterface) {
-            // Clear our own cache folder.
-            $this->flushFilesystemCache($this->filesystem->getFilesystem('cache'), $result);
+        // Clear our own cache folder.
+        $this->clearCacheHelper($this->getDirectory(), '', $result);
 
-            // Clear the thumbs folder.
-            $this->flushFilesystemCache($this->filesystem->getFilesystem('thumbs'), $result);
-        }
+        // Clear the thumbs folder.
+        $app = ResourceManager::getApp();
+        $this->clearCacheHelper($app['resources']->getPath('web') . '/thumbs', '', $result);
 
         return $result;
     }
 
     /**
-     * Helper function for doFlush().
+     * Helper function for clearCache().
      *
-     * @param FilesystemInterface $filesystem
-     * @param array               $result
+     * @param string $startFolder
+     * @param string $additional
+     * @param array  $result
      */
-    private function flushFilesystemCache(FilesystemInterface $filesystem, &$result)
+    private function clearCacheHelper($startFolder, $additional, &$result)
     {
-        $files = $filesystem->find()
-            ->files()
-            ->notName('index.html')
-            ->ignoreDotFiles()
-            ->ignoreVCS()
-        ;
+        $currentfolder = realpath($startFolder . '/' . $additional);
 
-        /** @var HandlerInterface $file */
-        foreach ($files as $file) {
-            try {
-                $file->delete();
-                $result['successfiles']++;
-            } catch (IOException $e) {
-                $result['failedfiles']++;
-                $result['failed'][] = $file->getPath();
+        if (!file_exists($currentfolder)) {
+            $result['log'] .= "Folder $currentfolder doesn't exist.<br>";
+
+            return;
+        }
+
+        $dir = dir($currentfolder);
+
+        while (($entry = $dir->read()) !== false) {
+            $exclude = array('.', '..', 'index.html', '.gitignore', '.version');
+
+            if (in_array($entry, $exclude)) {
+                continue;
+            }
+
+            if (is_file($currentfolder . '/' . $entry)) {
+                if (is_writable($currentfolder . '/' . $entry) && unlink($currentfolder . '/' . $entry)) {
+                    $result['successfiles']++;
+                } else {
+                    $result['failedfiles']++;
+                    $result['failed'][] = str_replace($startFolder, 'cache', $currentfolder . '/' . $entry);
+                }
+            }
+
+            if (is_dir($currentfolder . '/' . $entry)) {
+                $this->clearCacheHelper($startFolder, $additional . '/' . $entry, $result);
+
+                if (@rmdir($currentfolder . '/' . $entry)) {
+                    $result['successfolders']++;
+                } else {
+                    $result['failedfolders']++;
+                }
             }
         }
 
-        $dirs = $filesystem->find()
-            ->directories()
-            ->depth('< 1')
-        ;
+        $dir->close();
 
-        /** @var HandlerInterface $dir */
-        foreach ($dirs as $dir) {
-            try {
-                $dir->delete();
-                $result['successfolders']++;
-            } catch (IOException $e) {
-                $result['failedfolders']++;
-            }
+        $this->updateCacheVersion();
+    }
+
+    /**
+     * Check if the cache version matches Bolt's current version
+     *
+     * @return boolean TRUE  - versions match
+     *                 FALSE - versions don't match
+     */
+    private function checkCacheVersion()
+    {
+        $file = $this->getDirectory() . '/.version';
+
+        if (!file_exists($file)) {
+            return false;
         }
+
+        $version = md5($this->app['bolt_version'].$this->app['bolt_name']);
+        $cached  = file_get_contents($file);
+
+        if ($version === $cached) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Write our version string out to given cache directory
+     */
+    private function updateCacheVersion()
+    {
+        $version = md5($this->app['bolt_version'].$this->app['bolt_name']);
+        file_put_contents($this->getDirectory() . '/.version', $version);
     }
 }

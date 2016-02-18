@@ -78,6 +78,7 @@
 "Code:": "Kód:"
 "Collapse sidebar": "Skrýt postranní lištu"
 "Configuration": "Konfigurace"
+"Configure Extensions": "Nastavení rozšíření"
 "Content '%title%' could not be deleted.": "Obsah '%title%' nelze odstranit."
 "Content '%title%' could not be modified.": "Obsah '%title%' nelze upravit."
 "Content '%title%' has been changed to '%newStatus%'": "Obsah '%title%' byl pozměněn: '%newStatus%'"
@@ -193,7 +194,7 @@
 "No files in the list, yet.": "Žádné soubory v seznamu."
 "No images in the list, yet.": "Žádné obrázky v seznamu."
 "No relations found!": "Nenalezeno žádné související"
-"No results found for '%SEARCHTERM%'. Please try another search.": "Pro '%SEARCHTERM%' nebyly nalezeny žádné výsledky. Zkuste to jinak."
+"No results found for '%search%'. Please try another search.": "Pro '%search%' nebyly nalezeny žádné výsledky. Zkuste to jinak."
 "No such action for content.": "Pro obsah není tato akce možná."
 "No such action for user '%s'.": "Pro uživatele '%s' není tato akce dostupná"
 "No such user.": "Uživatel neexistuje."
@@ -307,7 +308,7 @@
 "There are no users in the database. Please create the first user.": "V databázi není žádný uživatel. Vytvořte prosím prvního uživatele."
 "There are no users present in the system. Please create the first user, which will be granted root privileges.": "V systému nejsou žádní uživatelé. Prosím vytvořte prvního uživatele, kterému bude poskytnuto oprávnění root."
 "There should always be at least one 'root' user. You have just been promoted. Congratulations!": "Vždy musí být alespoň jeden uživatel s právy 'root'. Gratulujeme! Právě jste byl/a vybrán/a."
-"There was an error uploading the file.\\nMake sure that the file type is of:\\n%TYPELIST%": "Při nahrávání souboru se vyskytla chyba.Ujistěte se, že uploadovaný soubor je požadovaného typu:\\n%TYPELIST%"
+"There was an error uploading the file.\\nMake sure that the file type is of:\\n%typelist%": "Při nahrávání souboru se vyskytla chyba.Ujistěte se, že uploadovaný soubor je požadovaného typu:\\n%typelist%"
 "This is a checkbox": "Toto je zašrtávací políčko"
 "This record is related to:": "Tento záznam souvisí s:"
 "This template adds new fields. Save, then refresh to see these changes.": "Šablona obsahuje nová pole obsahu. Uložte a aktualizujte stránku v prohlížeči, abyste změny viděli."
@@ -323,6 +324,7 @@
 "Try logging in with your ftp-client and make the file readable. Else try to go <a>back</a> to the last page.": "Zkuste se přihlásit pomocí ftp klienta a nastavte atributy souboru pro zápis. Nebo zkuste jít <a>zpět</a> na poslední stranu."
 "Types": "Typy"
 "Unfortunately, no content could be found. Try another page, or go to the <a href=\"%paths_root%\">homepage</a>.": "Bohužel zde není k nalezení žádný obsah. Zkuste jinou stránku nebo <a href=\"%paths_root%\">úvodní stranu</a>."
+"Unique Alias": "Jedinečný alias"
 "Update the database": "Aktualizovat databázi"
 "Upload a file to this folder": "Nahrajte soubor do této složky"
 "Upload file": "Nahrát soubor"
@@ -350,7 +352,7 @@
 "View related content": "Zobrazit související obsah"
 "View site": "Zobrazit web"
 "View/edit Templates": "Zobrazit / upravit Šablony"
-"Extensions": "Zobrazit / Instalovat Rozšíření"
+"View/install Extensions": "Zobrazit / Instalovat Rozšíření"
 "Warning": "Varování"
 "We were unable to generate the theme. It is likely that your theme directory is not writable by Bolt. Check the permissions and try reinstalling.": "Nelze vygenerovat šablonu. Do složky se šablonami patrně nelze zapisovat. Zkontrolujte oprávnění a zkuste instalaci zopakovat."
 "Written by <em>%name%</em> on %date%": "Vytvořeno <em>%name%</em> %date%"
@@ -507,8 +509,10 @@ field:
         placeholder:
             address: "Ulice, PSČ, město nebo jiné označení polohy"
     slug:
+        message:
+            set: "Nastavit trvalý odkaz na:"
+            unlock: "Jste si jisti, že chcete upravit trvalý odkaz? Můžeto ovlivnit již existující vazby. "
         permalink: "Trvalý odkaz"
-        unique-alias: "Jedinečný alias"
     video:
         button:
             preview: "Náhled"

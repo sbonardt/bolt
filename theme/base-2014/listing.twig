@@ -5,8 +5,6 @@
     <!-- Main Blog Content -->
     <div class="large-8 columns" role="content">
 
-        {{ widgets('main_top') }}
-
         {# This template is used for 'listings': Generic pages that list a number of
            records from a certain contenttype. These records are available as an array
            called 'records'. In the for-loop below, we iterate over the records that
@@ -23,8 +21,11 @@
                     {{ slug }}
                 {% endif %}
             </h1>
-            {# taxonomies are fetched unordered by design. If we specified an order in config.yml, sort them here: #}
-            {% set records = records|order(app.config.get('general/listing_sort')) %}
+            {# taxonomies are fetched unordered by design except if has_sortorder set true. #}
+            {%  if (not taxonomy.has_sortorder) %}
+                {# If we specified an order in config.yml, sort them here: #}
+                {% set records = records|order(app.config.get('general/listing_sort')) %}
+            {% endif %}
         {% endif %}
 
         {# This is also the default template for searchresults. If 'search' is defined,
@@ -73,7 +74,7 @@
                 {% if search is defined %}
 
                     <p>
-                        {{ __("No results found for '%SEARCHTERM%'. Please try another search.", { '%SEARCHTERM%': search|escape }) }}
+                        {{ __("No results found for '%search%'. Please try another search.", { '%search%': search|escape }) }}
                     </p>
 
                 {% else %}
@@ -96,8 +97,6 @@
 
         {# If there are more records than will fit on one page, the pager is shown. #}
         {{ pager() }}
-
-        {{ widgets('main_bottom') }}
 
 
     </div>

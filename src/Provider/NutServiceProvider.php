@@ -29,7 +29,7 @@ class NutServiceProvider implements ServiceProviderInterface
 
         $app['nut.commands'] = $app->share(
             function ($app) {
-                return [
+                return array(
                     new Nut\CronRunner($app),
                     new Nut\CacheClear($app),
                     new Nut\Info($app),
@@ -48,11 +48,9 @@ class NutServiceProvider implements ServiceProviderInterface
                     new Nut\ExtensionsEnable($app),
                     new Nut\ExtensionsDisable($app),
                     new Nut\UserAdd($app),
-                    new Nut\UserResetPassword($app),
                     new Nut\UserRoleAdd($app),
                     new Nut\UserRoleRemove($app),
-                    new Nut\SetupSync($app),
-                ];
+                );
             }
         );
 
@@ -89,7 +87,7 @@ class NutServiceProvider implements ServiceProviderInterface
                             if (is_callable($commandsToAdd)) {
                                 $commandsToAdd = $commandsToAdd($app);
                             }
-                            $commandsToAdd = is_array($commandsToAdd) ? $commandsToAdd : [$commandsToAdd];
+                            $commandsToAdd = is_array($commandsToAdd) ? $commandsToAdd : array($commandsToAdd);
                             foreach ($commandsToAdd as $command) {
                                 if (!$command instanceof Command) {
                                     throw new LogicException(

@@ -2,6 +2,7 @@
 
 namespace Bolt\Translation;
 
+use Bolt\Application;
 use Bolt\Configuration\ResourceManager;
 use Symfony\Component\Translation\Exception\InvalidResourceException;
 
@@ -43,7 +44,7 @@ class Translator
      *
      * @return string
      */
-    private static function trans($key, array $params = [], $domain = 'messages', $locale = null, $default = null)
+    private static function trans($key, array $params = array(), $domain = 'messages', $locale = null, $default = null)
     {
         $app = ResourceManager::getApp();
 
@@ -74,7 +75,10 @@ class Translator
             return ($trans === $key && $default !== null) ? $default : $trans;
         } catch (InvalidResourceException $e) {
             if (!isset($app['translationyamlerror']) && $app['request']->isXmlHttpRequest() === false) {
-                $app['logger.flash']->warning('<strong>Error: You should fix this now, before continuing!</strong><br>' . $e->getMessage());
+                $app['session']->getFlashBag()->add(
+                    'warning',
+                    '<strong>Error: You should fix this now, before continuing!</strong><br>' . $e->getMessage()
+                );
                 $app['translationyamlerror'] = true;
             }
 
@@ -95,7 +99,7 @@ class Translator
     {
         $key = 'contenttypes.' . $contenttype . '.name.' . ($singular ? 'singular' : 'plural');
 
-        $name = self::trans($key, [], 'contenttypes', $locale);
+        $name = self::trans($key, array(), 'contenttypes', $locale);
         if ($name === $key) {
             $app = ResourceManager::getApp();
 
@@ -134,9 +138,7 @@ class Translator
 
         // Try to get a real translation from contenttypes.xx_XX.yml
         $trans = self::trans($key, $encParams, 'contenttypes', $locale, false);
-        $app = ResourceManager::getApp();
-        $localeFallbacks = $app['locale_fallbacks'];
-        $transFallback = self::trans($key, $encParams, 'contenttypes', reset($localeFallbacks), false);
+        $transFallback = self::trans($key, $encParams, 'contenttypes', Application::DEFAULT_LOCALE, false);
 
         // We don't want fallback translation here
         if ($trans === $transFallback) {
@@ -184,7 +186,7 @@ class Translator
      *
      * @return string
      */
-    public static function /*@codingStandardsIgnoreStart*/__/*@codingStandardsIgnoreEnd*/($key, array $params = [], $domain = 'messages', $locale = null)
+    public static function /*@codingStandardsIgnoreStart*/__/*@codingStandardsIgnoreEnd*/($key, array $params = array(), $domain = 'messages', $locale = null)
     {
         // If $key is an array, convert it to a sanizized string
         if (is_array($key)) {

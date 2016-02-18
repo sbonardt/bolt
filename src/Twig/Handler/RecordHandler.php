@@ -6,10 +6,9 @@ use Bolt\Helpers\Html;
 use Silex;
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Finder\Glob;
-use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Bolt specific Twig functions and filters that provide \Bolt\Legacy\Content manipulation
+ * Bolt specific Twig functions and filters that provide \Bolt\Content manipulation
  *
  * @internal
  */
@@ -32,32 +31,44 @@ class RecordHandler
      * If we're on page/foo, and content is that page, you can use
      * {% is page|current %}class='active'{% endif %}
      *
-     * @param \Bolt\Legacy\Content|array $content
+     * @param \Bolt\Content|array $content
      *
      * @return boolean True if the given content is on the curent page.
      */
     public function current($content)
     {
-        /** @var Request $request */
-        $request = $this->app['request'];
-        $requestUri = $request->getPathInfo();
-        $routeParams = $request->get('_route_params');
+        $routeParams = $this->app['request']->get('_route_params');
 
         // If passed a string, and it is in the route.
         if (is_string($content) && in_array($content, $routeParams)) {
             return true;
         }
+        // special case for "home"
+        if (empty($content) && empty($routeParams)) {
+            return true;
+        }
 
         if (is_array($content) && isset($content['link'])) {
             $linkToCheck = $content['link'];
-        } elseif ($content instanceof \Bolt\Legacy\Content) {
+        } elseif ($content instanceof \Bolt\Content) {
             $linkToCheck = $content->link();
         } else {
             $linkToCheck = (string) $content;
         }
 
+        $uriFromRequest = explode('?', $this->app['request']->getRequestUri());
+        $requestedUri    = reset($uriFromRequest);
+
+        $entrancePageUrl = $this->app['config']->get('general/homepage');
+        $entrancePageUrl = (substr($entrancePageUrl, 0, 1) !== '/') ? '/' . $entrancePageUrl : $entrancePageUrl;
+
         // check against Request Uri
-        if ($requestUri === $linkToCheck) {
+        if ($requestedUri == $linkToCheck) {
+            return true;
+        }
+
+        // check against entrance page url from general configuration
+        if ('/' == $requestedUri && $linkToCheck == $entrancePageUrl) {
             return true;
         }
 
@@ -67,19 +78,20 @@ class RecordHandler
         }
 
         // check against simple content.link
-        if ('/' . $routeParams['contenttypeslug'] . '/' . $routeParams['slug'] === $linkToCheck) {
+        if ('/' . $routeParams['contenttypeslug'] . '/' . $routeParams['slug'] == $linkToCheck) {
             return true;
         }
 
-        if (!isset($content['contenttype'])) {
-            return false;
-        }
-
         // if the current requested page is for the same slug or singularslug.
-        $ct = $content['contenttype'];
-        if ($routeParams['contenttypeslug'] === $ct['slug'] || $routeParams['contenttypeslug'] === $ct['singular_slug']) {
-            // …and the slugs should match.
-            return $routeParams['slug'] === $content['slug'];
+        if (isset($content['contenttype']) &&
+            ($routeParams['contenttypeslug'] == $content['contenttype']['slug'] ||
+                $routeParams['contenttypeslug'] == $content['contenttype']['singular_slug'])
+        ) {
+
+            // .. and the slugs should match.
+            if ($routeParams['slug'] == $content['slug']) {
+                return true;
+            }
         }
 
         return false;
@@ -88,8 +100,8 @@ class RecordHandler
     /**
      * Create an excerpt for the given content.
      *
-     * @param \Bolt\Legacy\Content|array|string $content
-     * @param integer                           $length  Defaults to 200 characters
+     * @param \Bolt\Content|array $content
+     * @param integer             $length  Defaults to 200 characters
      *
      * @return string Resulting excerpt
      */
@@ -104,7 +116,7 @@ class RecordHandler
             }
         } elseif (is_array($content)) {
             // Assume it's an array, strip some common fields that we don't need, implode the rest.
-            $stripKeys = [
+            $stripKeys = array(
                 'id',
                 'slug',
                 'datecreated',
@@ -114,8 +126,8 @@ class RecordHandler
                 'title',
                 'contenttype',
                 'status',
-                'taxonomy',
-            ];
+                'taxonomy'
+            );
 
             foreach ($stripKeys as $key) {
                 unset($content[$key]);
@@ -139,7 +151,7 @@ class RecordHandler
      * Trims the given string to a particular length. Deprecated, use excerpt
      * instead.
      *
-     * @deprecated Deprecated since 3.0, to be removed in 4.0.
+     * @deprecated
      *
      * @param string  $content
      * @param integer $length  Defaults to 200
@@ -152,6 +164,46 @@ class RecordHandler
     }
 
     /**
+     * Lists content of a specific contenttype, specifically for editing
+     * relations in the backend.
+     *
+     * @param string        $contenttype
+     * @param array         $relationoptions
+     * @param \Bolt\Content $content
+     *
+     * @return string
+     */
+    public function listContent($contenttype, $relationoptions, $content)
+    {
+        // Just the relations for the current record, and just the current $contenttype.
+        $current = isset($content->relation[$contenttype]) ? $content->relation[$contenttype] : null;
+
+        // We actually only need the 'order' in options.
+        $options = array();
+        if (!empty($relationoptions['order'])) {
+            $options['order'] = $relationoptions['order'];
+            $options['limit'] = 10000;
+            $options['hydrate'] = false;
+        }
+
+        // @todo Perhaps make something more lightweight for this?
+        $results = $this->app['storage']->getContent($contenttype, $options);
+
+        // Loop the array, set records in 'current' to have a 'selected' flag.
+        if (!empty($current) && !empty($results)) {
+            foreach ($results as $key => $result) {
+                if (in_array($result->id, $current)) {
+                    $results[$key]['selected'] = true;
+                } else {
+                    $results[$key]['selected'] = false;
+                }
+            }
+        }
+
+        return $results;
+    }
+
+    /**
      * Lists templates, optionally filtered by $filter.
      *
      * @param string  $filter
@@ -159,7 +211,7 @@ class RecordHandler
      *
      * @return array Sorted and possibly filtered templates
      */
-    public function listTemplates($filter = null, $safe = false)
+    public function listTemplates($filter = '', $safe)
     {
         // No need to list templates in safe mode.
         if ($safe) {
@@ -167,36 +219,39 @@ class RecordHandler
         }
 
         // Get the active themeconfig
-        $themeConfig = $this->app['config']->get('theme/templateselect/templates', false);
-        $files = [];
+        $appConfig = $this->app['config']->getConfig();
+        $themeConfig = $appConfig['theme'];
+        $files = array();
 
         // Check: Are the templates for template chooser defined?
-        if ($themeConfig) {
-            foreach ($themeConfig as $templateFile) {
+        if (!empty($themeConfig['templateselect'])) {
+            foreach ($themeConfig['templateselect']['templates'] as $templateFile) {
                 if (!empty($templateFile['name']) && !empty($templateFile['filename'])) {
                     $files[$templateFile['filename']] = $templateFile['name'];
                 }
             }
+        } else {
+            if ($filter) {
+                $name = Glob::toRegex($filter, false, false);
+            } else {
+                $name = '/^[a-zA-Z0-9]\V+\.twig$/';
+            }
 
-            return $files;
-        }
+            $finder = new Finder();
+            $finder->files()
+                ->in($this->app['paths']['templatespath'])
+                ->notname('/^_/')
+                ->notPath('node_modules')
+                ->notPath('bower_components')
+                ->notPath('.sass-cache')
+                ->depth('<2')
+                ->path($name)
+                ->sortByName();
 
-        $name = $filter ? Glob::toRegex($filter, false, false) : '/^[a-zA-Z0-9]\V+\.twig$/';
-        $finder = new Finder();
-        $finder->files()
-            ->in($this->app['resources']->getPath('templatespath'))
-            ->notname('/^_/')
-            ->notPath('node_modules')
-            ->notPath('bower_components')
-            ->notPath('.sass-cache')
-            ->depth('<2')
-            ->path($name)
-            ->sortByName()
-        ;
-
-        foreach ($finder as $file) {
-            $name = $file->getRelativePathname();
-            $files[$name] = $name;
+            foreach ($finder as $file) {
+                $name = $file->getRelativePathname();
+                $files[$name] = $name;
+            }
         }
 
         return $files;
@@ -220,20 +275,20 @@ class RecordHandler
             return '';
         }
 
-        $pager = $this->app['storage']->getPager();
+        $pager = &$this->app['storage']->getPager();
 
         $thisPager = empty($pagerName) ? array_pop($pager) : $pager[$pagerName];
 
-        $context = [
+        $context = array(
             'pager' => $thisPager,
             'surr'  => $surr,
             'class' => $class,
-        ];
+        );
 
         /* Little hack to avoid doubling this function and having context without breaking frontend */
-        if ($template === 'backend') {
-            $context = ['context' => $context];
-            $template = '@bolt/components/pager.twig';
+        if ($template == 'backend') {
+            $context = array('context' => $context);
+            $template = 'components/pager.twig';
         }
 
         return new \Twig_Markup($env->render($template, $context), 'utf-8');
@@ -242,31 +297,35 @@ class RecordHandler
     /**
      * Return a selected field from a contentset.
      *
-     * @param array        $content    A Bolt record array
-     * @param array|string $fieldName  Name of a field, or array of field names to return from each record
-     * @param boolean      $startempty Whether or not the array should start with an empty element
-     * @param string       $keyName    Name of the key in the array
+     * @param array   $content    A Bolt record array
+     * @param mixed   $fieldname  Name of field (string), or array of names of fields, to return from each record
+     * @param boolean $startempty Whether or not the array should start with an empty element
+     * @param string  $keyname    Name of the key in the arrat
      *
      * @return array
      */
-    public function selectField($content, $fieldName, $startempty = false, $keyName = 'id')
+    public function selectField($content, $fieldname, $startempty = false, $keyname = 'id')
     {
-        $retval = $startempty ? [] : ['' => ''];
-
-        if (empty($content)) {
-            return $retval;
+        if ($startempty) {
+            $retval = array();
+        } else {
+            $retval = array('' => '');
         }
-
         foreach ($content as $c) {
-            $element = $c->values[$keyName];
-            if (is_array($fieldName)) {
-                $row = [];
-                foreach ($fieldName as $fn) {
-                    $row[] = isset($c->values[$fn]) ? $c->values[$fn] : null;
+            if (is_array($fieldname)) {
+                $row = array();
+                foreach ($fieldname as $fn) {
+                    if (isset($c->values[$fn])) {
+                        $row[] = $c->values[$fn];
+                    } else {
+                        $row[] = null;
+                    }
                 }
-                $retval[$element] = $row;
-            } elseif (isset($c->values[$fieldName])) {
-                $retval[$element] = $c->values[$fieldName];
+                $retval[$c->values[$keyname]] = $row;
+            } else {
+                if (isset($c->values[$fieldname])) {
+                    $retval[$c->values[$keyname]] = $c->values[$fieldname];
+                }
             }
         }
 

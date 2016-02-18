@@ -1,6 +1,6 @@
 {# Page: NavSecondary > Dashboard > Configuration > Change Log #}
 
-{% extends '@bolt/_base/_page-nav.twig' %}
+{% extends '_base/_page-nav.twig' %}
 
 {% block page_nav 'Settings/Configuration' %}
 
@@ -8,10 +8,9 @@
 
 {% block page_main %}
 
-    {% from '@bolt/_macro/_pager.twig' import pager %}
+    {% from '_macro/_pager.twig' import pager %}
 
-    {% import '@bolt/_macro/_macro.twig' as macro %}
-    {% import '@bolt/_macro/_buic.twig' as buic %}
+    {% import '_macro/_macro.twig' as macro %}
 
     <div class="row">
         <div class="col-xs-12">
@@ -30,20 +29,19 @@
                     <tr>
                         <th></th>
                         <th>Type</th>
-                        <th class="col-sm-1">ContentType</th>
-                        <th>ID</th>
-                        <th class="col-sm-2">Title</th>
-                        <th class="col-sm-3">Changed Fields</th>
-                        <th class="col-sm-3">Editor's Comment</th>
-                        <th class="col-sm-1">User</th>
-                        <th class="col-sm-1">Date</th>
+                        <th>Contenttype</th>
+                        <th>Title</th>
+                        <th>Fields</th>
+                        <th>Comment</th>
+                        <th>User</th>
+                        <th>Date</th>
                     </tr>
                 </thead>
                 <tbody>
-                {% for entry in context.entries %}
+                {% for entry in entries %}
                     <tr>
                         <td>
-                            <a href="{{ path('changelogrecordsingle', {'contenttype': entry.contenttype, 'contentid': entry.contentid, 'id': entry.id}) }}">№ {{ entry.id }}</a>
+                            № {{ entry.id }}
                         </td>
                         <td>
                             {{ entry.mutation_type|title }}
@@ -52,10 +50,7 @@
                             {{ entry.contenttype }}
                         </td>
                         <td>
-                            {{ entry.contentid }}
-                        </td>
-                        <td>
-                            <a href="{{ path('editcontent', {'contenttypeslug': entry.contenttype, 'id': entry.contentid}) }}">{{ entry.title }}</a>
+                            [{{ entry.contentid }}] {{ entry.title }}
                         </td>
                         <td>
                             {{ entry.diff|keys|join(', ') }}
@@ -64,10 +59,16 @@
                             {{ entry.comment|default('') }}
                         </td>
                         <td>
-                            <em>{{ macro.userlink(entry.ownerid) }}</em>
+                            {% set user = getuser(entry.ownerid) %}
+                            {% if user is not empty %}
+                                {% set userlink = macro.userlink(user) %}
+                            {% else %}
+                                {% set userlink = __('panel.latest-activity.unknown') %}
+                            {% endif %}
+                            <em>{{ userlink }}</em>
                         </td>
                         <td>
-                            {{ buic.moment(entry.date) }}
+                            <time class="moment" datetime="{{ entry.date|date("c") }}" title="{{ entry.date }}">{{ entry.date }}</time>
                         </td>
                     </tr>
                 {% endfor %}

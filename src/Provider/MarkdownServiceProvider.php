@@ -11,7 +11,7 @@ class MarkdownServiceProvider implements ServiceProviderInterface
     public function register(Application $app)
     {
         $app['markdown'] = $app->share(
-            function () {
+            function ($app) {
                 $markdown = new Markdown();
 
                 return $markdown;

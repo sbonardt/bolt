@@ -1,10 +1,10 @@
 <?php
 namespace Bolt\Configuration;
 
+use Bolt\Application;
 use Composer\Autoload\ClassLoader;
 use Eloquent\Pathogen\AbsolutePathInterface;
 use Eloquent\Pathogen\RelativePathInterface;
-use Silex\Application;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -13,39 +13,43 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * Intended to simplify the ability to override resource location
  *
- * @deprecated Deprecated since 3.0, to be removed in 4.0.
- *
  * @author Ross Riley, riley.ross@gmail.com
  */
 class ResourceManager
 {
-    /** @var \Silex\Application */
+    /** @var \Bolt\Application */
     public $app;
 
     /** @var string */
     public $urlPrefix = '';
 
     /**
-     * @var \Silex\Application
+     * @var \Bolt\Application
      *
-     * @deprecated Deprecated since 3.0, to be removed in 4.0.
+     * @deprecated Don't use! Will probably refactored out soon
      */
     public static $theApp;
 
     /** @var \Eloquent\Pathogen\AbsolutePathInterface */
     protected $root;
+
     /** @var Request */
     protected $requestObject;
+
     /** @var AbsolutePathInterface[] */
-    protected $paths = [];
-    /** @var array */
-    protected $urls = [];
+    protected $paths = array();
+
+    protected $urls = array();
+
     /** @var string[] */
-    protected $request = [];
+    protected $request = array();
+
     /** @var LowLevelChecks|null */
     protected $verifier;
+
     /** @var \Composer\Autoload\ClassLoader|null */
     protected $classLoader;
+
     /** @var \Eloquent\Pathogen\FileSystem\Factory\FileSystemPathFactory */
     protected $pathManager;
 
@@ -93,10 +97,8 @@ class ResourceManager
         $this->setPath('web', '');
         $this->setPath('cache', 'app/cache');
         $this->setPath('config', 'app/config');
-        $this->setPath('src', dirname(__DIR__));
         $this->setPath('database', 'app/database');
         $this->setPath('themebase', 'theme');
-        $this->setPath('view', 'app/view');
     }
 
     /**
@@ -115,16 +117,14 @@ class ResourceManager
     }
 
     /**
-     * Don't use!
-     *
-     * @deprecated Deprecated since 3.0, to be removed in 4.0.
+     * @deprecated Don't use! Will probably refactored out soon
      *
      * @param Application $app
      */
     public function setApp(Application $app)
     {
         $this->app = $app;
-        self::$theApp = $app;
+        ResourceManager::$theApp = $app;
     }
 
     /**
@@ -142,8 +142,6 @@ class ResourceManager
         if ($path instanceof RelativePathInterface) {
             $path = $path->resolveAgainst($this->paths['root']);
         }
-
-        $path = $path->normalize();
 
         $this->paths[$name] = $path;
         if (strpos($name, 'path') === false) {
@@ -190,7 +188,7 @@ class ResourceManager
      */
     public function getPathObject($name)
     {
-        $parts = [];
+        $parts = array();
         if (strpos($name, '/') !== false) {
             $parts = explode('/', $name);
             $name = array_shift($parts);
@@ -220,7 +218,7 @@ class ResourceManager
      */
     public function hasPath($name)
     {
-        $parts = [];
+        $parts = array();
         if (strpos($name, '/') !== false) {
             $parts = explode('/', $name);
             $name = array_shift($parts);
@@ -369,7 +367,7 @@ class ResourceManager
         }
 
         $this->setRequest('protocol', $protocol);
-        $hostname = $request->server->get('HTTP_HOST', 'localhost');
+        $hostname = $request->server->get('HTTP_HOST');
         $this->setRequest('hostname', $hostname);
         $current = $request->getBasePath() . $request->getPathInfo();
         $this->setUrl('current', $current);
@@ -516,7 +514,7 @@ class ResourceManager
      *
      * @throws \RuntimeException
      *
-     * @return \Silex\Application
+     * @return \Bolt\Application
      */
     public static function getApp()
     {
@@ -553,7 +551,7 @@ class ResourceManager
      */
     private function isPagingRequest(Request $request)
     {
-        $matches = [];
+        $matches = array();
         $found = preg_match('/page_[A-Za-z0-9_]+=\d+/', $request->getRequestUri(), $matches);
 
         return (bool) $found;

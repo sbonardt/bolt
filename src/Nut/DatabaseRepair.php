@@ -17,8 +17,7 @@ class DatabaseRepair extends BaseCommand
     {
         $this
             ->setName('database:update')
-            ->setDescription('Repair and/or update the database.')
-        ;
+            ->setDescription('Repair and/or update the database.');
     }
 
     /**
@@ -26,18 +25,20 @@ class DatabaseRepair extends BaseCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $response = $this->app['schema']->update();
+        $result = $this->app['integritychecker']->repairTables();
 
-        if (!$response->hasResponses()) {
-            $output->writeln('<info>Your database is already up to date.</info>');
+        if (empty($result)) {
+            $content = "<info>Your database is already up to date.</info>";
         } else {
-            $output->writeln('<comment>Modifications made to the database:</comment>');
-            foreach ($response->getResponseStrings() as $messages) {
-                $output->writeln('<info> - ' . $messages . '</info>');
+            $content = "<info>Modifications made to the database:</info>\n";
+            foreach ($result as $line) {
+                $content .= ' - ' . str_replace('tt>', 'info>', $line) . "\n";
             }
-            $output->writeln('<info>Your database is now up to date.</info>');
+            $content .= "<info>Your database is now up to date.</info>";
 
             $this->auditLog(__CLASS__, 'Database updated');
         }
+
+        $output->writeln($content);
     }
 }

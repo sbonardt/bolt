@@ -26,7 +26,11 @@
                     </td>
 
                     <td class="hidden-xs">
-                        {{ user.lastseen|date('Y') > '1901' ? buic.moment(user.lastseen) : '-' }}
+                        {% if user.lastseen|date('Y') > "1901" %}
+                            <time class="moment" datetime="{{ user.lastseen|date("c") }}" title="{{ user.lastseen }}">{{ user.lastseen }}</time>
+                        {% else %}
+                        -
+                        {% endif %}
                     </td>
 
                     <td class="contenttypes">
@@ -38,7 +42,7 @@
                     </td>
 
                     <td class="actions">
-                        {% include '@bolt/users/_userlist-actions.twig' %}
+                        {% include 'users/_userlist-actions.twig' %}
                     </td>
             </tr>
 

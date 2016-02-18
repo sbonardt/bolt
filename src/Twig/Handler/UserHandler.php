@@ -67,7 +67,7 @@ class UserHandler
     {
         $contenttype = null;
         $contentid = null;
-        if ($content instanceof \Bolt\Legacy\Content) {
+        if ($content instanceof \Bolt\Content) {
             // It's a content record
             $contenttype = $content;
             $contentid = $content['id'];
@@ -85,7 +85,6 @@ class UserHandler
      * Get a simple Anti-CSRF-like token.
      *
      * @see \Bolt\Users::getAntiCSRFToken()
-     * @deprecated Deprecated since 3.0, to be removed in 4.0. Use Symfony forms instead.
      *
      * @return string
      */

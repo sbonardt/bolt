@@ -1,4 +1,4 @@
-{% import '@bolt/_macro/_panels.twig' as panels %}
+{% import '_macro/_panels.twig' as panels %}
 
 {# No Javascript #}
 <noscript>
@@ -20,9 +20,6 @@
 </div>
 {% endif %}
 
-{# Dashboard Widget #}
-{{ widgets('dashboard_aside_top', 'backend') }}
-
 {# News #}
 {{ render(path('dashboardnews')) }}
 
@@ -30,15 +27,12 @@
 {{ panels.stack(7, true) }}
 
 {# Dashboard Widget #}
-{{ widgets('dashboard_aside_middle', 'backend') }}
+{{ widget('dashboard', 'right_first') }}
 
 {# Latest Activity #}
-<div data-bolt-widget="panelActivity">
+<div id="latestactivity">
     {{ render(path('latestactivity')) }}
 </div>
-
-{# Dashboard Widget #}
-{{ widgets('dashboard_aside_bottom', 'backend') }}
 
 {# ? #}
 <div id="latesttemp" style="display:none; visibility: hidden;">

@@ -60,15 +60,15 @@ HTML;
 
     protected function checkSummary()
     {
-        $status = [];
+        $status = array();
         $status[] = $this->composerSuffix;
-        $checks = [
+        $checks = array(
             $this->config->getPath('config'),
             $this->config->getPath('database'),
             $this->config->getPath('cache'),
             $this->config->getPath('extensions'),
-            $this->config->getPath('web') . '/extensions',
-        ];
+            $this->config->getPath('web') . '/extensions'
+        );
         foreach ($checks as $check) {
             if (is_readable($check) && is_writable($check)) {
                 $status[] = 'ok';
@@ -91,13 +91,13 @@ HTML;
 
         if (!is_dir($location)) {
             throw new LowlevelException(
-                'The default folder <code>' . $location .
+                "The default folder <code>" . $location .
                 "</code> doesn't exist. Make sure it's " .
                 'present and writable to the user that the webserver is using.' . $this->checkSummary()
             );
         } elseif (!is_writable($location)) {
             throw new LowlevelException(
-                'The default folder <code>' . $location .
+                "The default folder <code>" . $location .
                 "</code> isn't writable. Make sure it's writable to the user that the webserver is using." . $this->checkSummary()
             );
         }

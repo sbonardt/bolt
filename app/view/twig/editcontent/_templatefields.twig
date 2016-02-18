@@ -1,14 +1,15 @@
 {% if not context.has.tabs %}
+    <hr>
     <h3>
-        {{ __('contenttypes.generic.group.template') }}
+        {{ __('Template') }}
     </h3>
 {% endif %}
 
 {% set templatefields = context.content.get('templatefields').contenttype %}
-{% if templatefields.fields is not empty %}
+{% if templatefields is not empty %}
     {% for templatekey, templatefield in templatefields.fields %}
 
-            <div data-bolt-fieldset="{{ templatefield.type }}">
+            <div class="form-group" data-fieldtype="{{ templatefield.type }}">
                 {# Prefix #}
                 {% if templatefield.prefix is defined and templatefield.prefix is not empty %}
                     <div class="prefix">
@@ -19,14 +20,18 @@
                 {# Fields #}
                 {% set templatelabelkey = templatefield.label ?: templatekey|ucfirst %}
 
-                {% include context.fields[templatefield.type].template with {
-                    field: templatefield,
-                    key: 'templatefields-' ~ templatekey,
-                    contentkey: templatekey,
-                    context: context|merge({ content: context.content.get('templatefields') }),
-                    name: 'templatefields[' ~ templatekey ~ ']',
-                    labelkey:  templatelabelkey
-                } %}
+                {% for fieldtype in context.fields %}
+                    {% if templatefield.type == fieldtype.name %}
+                        {% include fieldtype.template with {
+                            field: templatefield,
+                            key: 'templatefields-' ~ templatekey,
+                            contentkey: templatekey,
+                            context: context|merge({ content: context.content.get('templatefields') }),
+                            name: 'templatefields[' ~ templatekey ~ ']',
+                            labelkey:  templatelabelkey
+                        } %}
+                    {% endif %}
+                {% endfor %}
 
                 {# Postfix #}
                 {% if templatefield.postfix is defined and templatefield.postfix is not empty %}
@@ -42,4 +47,8 @@
             </div>
 
     {% endfor %}
+{% endif %}
+
+{% if not context.has.tabs %}
+    <hr>
 {% endif %}

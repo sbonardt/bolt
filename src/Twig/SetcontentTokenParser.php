@@ -4,11 +4,27 @@ namespace Bolt\Twig;
 
 class SetcontentTokenParser extends \Twig_TokenParser
 {
+    protected function convertToViewArguments(\Twig_Node_Expression_Array $array)
+    {
+        $arguments = array();
+
+        foreach (array_chunk($array->getIterator()->getArrayCopy(), 2) as $pair) {
+            if (count($pair) == 2) {
+                $key   = $pair[0]->getAttribute('value');
+                $value = $pair[1]->getAttribute('value');   // @todo support for multiple types
+
+                $arguments[$key] = $value;
+            }
+        }
+
+        return $arguments;
+    }
+
     public function parse(\Twig_Token $token)
     {
         $lineno = $token->getLine();
 
-        $arguments = new \Twig_Node_Expression_Array([], $lineno);
+        $arguments = new \Twig_Node_Expression_Array(array(), $lineno);
         $wherearguments = null;
 
         // name - the new variable with the results
@@ -21,6 +37,7 @@ class SetcontentTokenParser extends \Twig_TokenParser
         $counter = 0;
 
         do {
+
             // where parameter
             if ($this->parser->getStream()->test(\Twig_Token::NAME_TYPE, 'where')) {
                 $this->parser->getStream()->next();

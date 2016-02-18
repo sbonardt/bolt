@@ -1,9 +1,8 @@
 {# Page: NavSecondary > Content ... > Edit #}
 
-{% import '@bolt/_macro/_macro.twig' as macro %}
-{% import '@bolt/_macro/_buic.twig' as buic %}
+{% import '_macro/_macro.twig' as macro %}
 
-{% extends '@bolt/_base/_page-nav.twig' %}
+{% extends '_base/_page-nav.twig' %}
 
 {% block page_nav 'Content/*' %}
 
@@ -22,14 +21,9 @@
 {% block messages "" %}
 
 {% block page_main %}
-    {% set status_names = {
-        'published': __('Published'),
-        'held':      __('Not published'),
-        'timed':     __('Timed publish'),
-        'draft':     __('Draft')
-    } %}
+    {% set status_names = {"published": __("Published"), "held": __("Not published"), "timed": __("Timed publish"), "draft": __("Draft")} %}
 
-    {% set dateChanged %}{{ buic.moment(context.content.datechanged) }}{% endset %}
+    {% set dateChanged %}{{ macro.datetime(context.content.datechanged) }}{% endset %}
 
     {% set bind_data = {
         savedon:        __('Saved on:') ~ ' <strong></strong> <small>(' ~ dateChanged ~ ')</small></p>',
@@ -45,28 +39,30 @@
         enctype: 'multipart/form-data',
         id:      'editcontent',
         method:  'post',
+        role:    'form',
     } %}
 
-    {% set attributes = {
-        hid_editreferrer: {
-            name_id:  'editreferrer',
-            type:     'hidden',
-            value:    editreferrer|default(''),
-        },
+    {% set alertbox %}
+        <div id="%NOTICE_ID%" class="alert alert-danger">
+            <button class="close" data-dismiss="alert">×</button>
+            <label for="%FIELD_ID%">{{ __('Field “%FIELD_NAME%”:') }}</label>
+            %MESSAGE%
+        </div>
+    {% endset %}
 
-        hid_contenttype: {
-            name_id:   'contenttype',
-            type:      'hidden',
-            value:     context.contenttype.slug,
-        },
-    } %}
+    {{ data('validation', {
+        'alertbox':     alertbox|trim,
+        'generic_msg':  __('Is required or needs to match a pattern!'),
+    }) }}
+    {{ data('editcontent.msg', {
+        'change_quit': __('You have unfinished changes on this page. If you continue without saving, you will lose these changes.'),
+        'saving':      __('Saving …')
+    }) }}
 
     <div class="row">
         <div class="col-md-8">
 
-            {% include '@bolt/_sub/_messages.twig' %}
-
-            {{ widgets('editcontent_below_header', 'backend') }}
+            {% include '_sub/_messages.twig' %}
 
             {# Only if we have grouping tabs. #}
             {% if context.has.tabs %}
@@ -80,10 +76,7 @@
             {% endif %}
 
             <form{{ macro.attr(attr_form) }}>
-                {% include '@bolt/_sub/_csrf_token.twig' %}
-
-                <input{{ macro.attr(attributes.hid_editreferrer) }}>
-                <input{{ macro.attr(attributes.hid_contenttype) }}>
+                {% include '_sub/_csrf_token.twig' %}
 
                 {% for group_name, group in context.groups %}
 
@@ -91,27 +84,21 @@
                         <div class="tab-pane{{ group.is_active ? ' active' : '' }}" id="{{ group.id }}">
                     {% endif %}
 
-                    {% for key in group.fields %}
+                    {% if group_name == 'relations' %}
+                        {% include 'editcontent/_relations.twig' %}
 
-                        {% if key == '*relations' %}
-                            {% include '@bolt/editcontent/_relations.twig' %}
+                    {% elseif group_name == 'taxonomy' %}
+                        {% include 'editcontent/_taxonomies.twig' %}
 
-                        {% elseif key == '*taxonomy' %}
-                            {% include '@bolt/editcontent/_taxonomies.twig' %}
+                    {% elseif group_name == 'meta' %}
+                        {% include 'editcontent/_meta.twig' %}
 
-                        {% elseif key == '*meta' %}
-                            <div data-bolt-fieldset="meta">
-                                {% include '@bolt/editcontent/fields/_meta.twig' %}
-                            </div>
+                    {% elseif group_name == 'template' %}
+                        {% include 'editcontent/_templatefields.twig' %}
 
-                        {% elseif key == '*template' %}
-                            {% include '@bolt/editcontent/_templatefields.twig' %}
-
-                        {% else %}
-                            {% include '@bolt/editcontent/_field.twig' %}
-                        {% endif %}
-
-                    {% endfor %}
+                    {% else %}
+                        {% include 'editcontent/_fields.twig' %}
+                    {% endif %}
 
                     {% if context.has.tabs %}
                         </div>
@@ -121,22 +108,20 @@
 
                 <input type="hidden" name="_live-editor-preview" value=""/>
 
-                {% include '@bolt/editcontent/_buttons.twig' %}
+                {% include 'editcontent/_buttons.twig' %}
             </form>
 
-            {% include '@bolt/editcontent/_includes-data.twig' %}
-
-            {{ widgets('editcontent_bottom', 'backend') }}
+            {% include 'editcontent/_includes-data.twig' %}
 
         </div>
 
         <aside class="col-md-4 hidden-sm">
-            {% include '@bolt/editcontent/_aside.twig' %}
+            {% include 'editcontent/_aside.twig' %}
         </aside>
     </div>
 
 {% endblock page_main %}
 
 {% block page_main_extra_content %}
-    {% include '@bolt/editcontent/_live-editor.twig' %}
+    {% include 'editcontent/_live-editor.twig' %}
 {% endblock %}

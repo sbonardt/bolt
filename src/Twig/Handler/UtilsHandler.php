@@ -25,6 +25,21 @@ class UtilsHandler
     }
 
     /**
+     *  Switch the debugbar 'on' or 'off'. Note: this has no influence on the
+     * 'debug' setting itself. When 'debug' is off, setting this to 'on', will
+     * _not_ show the debugbar.
+     *
+     * @param boolean $value
+     */
+    public function debugBar($value)
+    {
+        // Make sure it's actually true or false;
+        $value = ($value) ? true : false;
+
+        $this->app['debugbar'] = $value;
+    }
+
+    /**
      * Check if a file exists.
      *
      * @param string  $fn
@@ -56,7 +71,7 @@ class UtilsHandler
             return null;
         }
 
-        return VarDumper::dump(debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, $depth));
+        return VarDumper::dump(debug_backtrace());
     }
 
     /**
@@ -87,14 +102,19 @@ class UtilsHandler
      */
     public function printFirebug($var, $msg, $safe)
     {
-        if ($safe || !$this->app['debug']) {
+        if ($safe) {
             return null;
         }
-
-        if (is_string($msg)) {
-            $this->app['logger.firebug']->info($msg, (array) $var);
-        } elseif (is_string($var)) {
-            $this->app['logger.firebug']->info($var, (array) $msg);
+        if ($this->app['debug']) {
+            if (is_array($var)) {
+                $this->app['logger.firebug']->info($msg, $var);
+            } elseif (is_string($var)) {
+                $this->app['logger.firebug']->info($var);
+            } else {
+                $this->app['logger.firebug']->info($msg, (array) $var);
+            }
+        } else {
+            return null;
         }
     }
 

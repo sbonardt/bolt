@@ -3,7 +3,6 @@
 namespace Bolt\Provider;
 
 use Bolt\Config;
-use Bolt\Configuration\Environment;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
@@ -16,22 +15,6 @@ class ConfigServiceProvider implements ServiceProviderInterface
                 $config = new Config($app);
 
                 return $config;
-            }
-        );
-
-        $app['config.environment'] = $app->share(
-            function ($app) {
-                $appPath = $app['resources']->getPath('app');
-                $viewPath = $app['resources']->getPath('view');
-
-                $environment = new Environment(
-                    $appPath,
-                    $viewPath,
-                    $app['cache'],
-                    $app['bolt_long_version']
-                );
-
-                return $environment;
             }
         );
     }

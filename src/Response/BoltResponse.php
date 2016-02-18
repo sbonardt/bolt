@@ -3,7 +3,6 @@
 namespace Bolt\Response;
 
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Stopwatch\Stopwatch;
 use Twig_Template as Template;
 
 /**
@@ -16,10 +15,8 @@ class BoltResponse extends Response
 {
     /** @var Template */
     protected $template;
-    protected $context = [];
+    protected $context = array();
     protected $compiled = false;
-    /** @var Stopwatch|null */
-    protected $stopwatch;
 
     /**
      * Constructor.
@@ -30,7 +27,7 @@ class BoltResponse extends Response
      * @param int      $status   The response status code
      * @param array    $headers  An array of response headers
      */
-    public function __construct(Template $template, array $context = [], array $globals = [], $status = 200, $headers = [])
+    public function __construct(Template $template, array $context = array(), array $globals = array(), $status = 200, $headers = array())
     {
         parent::__construct(null, $status, $headers);
         $this->template = $template;
@@ -50,14 +47,9 @@ class BoltResponse extends Response
      *
      * @return \Bolt\Response\BoltResponse
      */
-    public static function create($template = null, $context = [], $globals = [], $status = 200, $headers = [])
+    public static function create($template = null, $context = array(), $globals = array(), $status = 200, $headers = array())
     {
         return new static($template, $context, $globals, $status, $headers);
-    }
-
-    public function setStopwatch(Stopwatch $stopwatch)
-    {
-        $this->stopwatch = $stopwatch;
     }
 
     /**
@@ -159,11 +151,7 @@ class BoltResponse extends Response
         try {
             return $this->getContent();
         } catch (\Exception $e) {
-            // the __toString method isn't allowed to throw exceptions
-            // so we turn them into an error instead
-            trigger_error($e->getMessage() . "\n" . $e->getTraceAsString(), E_USER_ERROR);
-
-            return '';
+            return $this->handleException($e);
         }
     }
 
@@ -196,14 +184,25 @@ class BoltResponse extends Response
      */
     public function compile()
     {
-        if ($this->stopwatch) {
-            $this->stopwatch->start('bolt.render', 'template');
-        }
         $output = $this->template->render($this->context);
         $this->setContent($output);
         $this->compiled = true;
-        if ($this->stopwatch) {
-            $this->stopwatch->stop('bolt.render');
+    }
+
+    /**
+     * The __toString method isn't allowed to throw exceptions so we turn them into an error instead
+     *
+     * @param \Exception $e
+     *
+     * @return string
+     */
+    private function handleException(\Exception $e)
+    {
+        trigger_error($e->getMessage() . "\n" . $e->getTraceAsString(), E_USER_WARNING);
+        if ($e instanceof \Twig_Error) {
+            return '<strong>' . $e->getRawMessage() . '</strong>';
         }
+
+        return '';
     }
 }

@@ -8,19 +8,26 @@ use Silex\ServiceProviderInterface;
 
 class RenderServiceProvider implements ServiceProviderInterface
 {
+    public function __construct($safe = false)
+    {
+        $this->safe = $safe;
+    }
+
     public function register(Application $app)
     {
-        $app['render'] = $app->share(
-            function ($app) {
-                return new Render($app);
-            }
-        );
-
-        $app['safe_render'] = $app->share(
-            function ($app) {
-                return new Render($app, true);
-            }
-        );
+        if ($this->safe) {
+            $app['render'] = $app->share(
+                function ($app) {
+                    return new Render($app);
+                }
+            );
+        } else {
+            $app['safe_render'] = $app->share(
+                function ($app) {
+                    return new Render($app, true);
+                }
+            );
+        }
     }
 
     public function boot(Application $app)

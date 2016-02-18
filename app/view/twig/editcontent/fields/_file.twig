@@ -1,8 +1,8 @@
 {#=== OPTIONS ========================================================================================================#}
 
 {% set option = {
-    class:       ('form-control ' ~ field.class)|trim,
-    label:       field.label,
+    class:       field.class|default(''),
+    label:       field.label|default(''),
     extensions:  field.extensions|default([]),
     upload:      field.upload|default(''),
     can_upload:  field.canUpload,
@@ -11,52 +11,60 @@
 
 {#=== INIT ===========================================================================================================#}
 
-{% set attributes = {
-    filepath: {
-        class:        option.class ~ ' path',
-        id:           'field-' ~ key,
-        name:         name,
-        placeholder:  __('field.general.allowed-filetypes') ~ ' ' ~ option.extensions|join(', ') ~ ' …',
-        type:         'text',
-        value:        context.content.get(contentkey),
-    },
-
-    upload: {
-        accept:       option.extensions ? '.' ~ option.extensions|join(',.') : '',
-        data_url:     url('upload', {'handler': option.upload}),
-        id:           'fileupload-' ~ key,
-        name:         'files[]',
-        type:         'file',
-    }
+{% set attr_filepath = {
+    class:       option.class ~ ' imageinput',
+    id:          'field-' ~ key,
+    name:        name,
+    type:        'text',
+    placeholder: __('field.general.allowed-filetypes') ~ ' ' ~ option.extensions|join(', ') ~ ' …',
+    value:       context.content.get(contentkey),
 } %}
 
-{% set can_upload = context.can.upload and option.can_upload %}
+{% set attr_upload = {
+    accept:       option.extensions ? '.' ~ option.extensions|join(',.') : '',
+    data_upload:  {type: 'File', key: key}|json_encode(),
+    data_url:     url('upload', {'handler': option.upload}),
+    id:           'fileupload-' ~ key,
+    name:         'files[]',
+    type:         'file',
+} %}
+
+{#=== BLOCKS =========================================================================================================#}
+
+{% import _self as block %}
+
+{% macro progress(key) %}
+    <div class="progress file-progress progress-striped active" id="progress-{{ key }}">
+        <div class="progress-bar" style="width: 0%;"></div>
+    </div>
+{% endmacro %}
+
+{# Modal "select from server" #}
+{% macro serverselect(key) %}
+    <div class="modal fade" id="selectModal-{{ key }}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content"></div>
+        </div>
+    </div>
+{% endmacro %}
 
 {#=== FIELDSET =======================================================================================================#}
 
-{% extends '@bolt/_base/_fieldset.twig' %}
+<fieldset class="file">
+    <label class="col-sm-12 control-label">{{ (option.info) ? macro.infopop(labelkey, option.info) : labelkey }}</label>
 
-{% block fieldset_type 'file' %}
-{% block fieldset_widget 'fieldFile' %}
+    <div class="col-sm-12 dropzone clearfix" id="dropzone-{{ key }}">
+        <input{{ macro.attr(attr_filepath) }}>
+        {% set can_upload = context.can_upload and option.can_upload %}
+        {{ macro.upload_buttons('file', key, attr_upload, option.upload, can_upload) }}
+        {{ block.progress(key) }}
+        {{ block.serverselect(key, __('Cancel')) }}
 
-{% block fieldset_label_text  labelkey %}
-{% block fieldset_label_info  option.info %}
-{% block fieldset_label_class 'col-xs-12' %}
-
-{% block fieldset_controls %}
-    <div class="col-xs-12 dropzone clearfix">
-        {# Path #}
-        <input{{ macro.attr(attributes.filepath) }}>
-
-        {# Progressbar #}
-        <div class="buic-progress" data-bolt-widget="buicProgress"></div>
-
-        {# Uploadbuttons #}
-        {{ macro.upload_buttons('file', attributes.upload, option.upload, can_upload) }}
-
-        {# Infotext #}
         {% if not ismobileclient() %}
-            <div class="hidden-xs"><label>{{ app.translator.trans('info.upload.filesmall', {}, 'infos') }}</label></div>
+            <div style="clear: left;" class="hidden-xs">
+                <small>{{ app.translator.trans('info.upload.filesmall', {}, 'infos') }}</small>
+            </div>
         {% endif %}
     </div>
-{% endblock fieldset_controls %}
+
+</fieldset>

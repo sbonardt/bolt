@@ -1,6 +1,8 @@
 <?php
 namespace Bolt\Events;
 
+use Bolt;
+use Bolt\Content;
 use Symfony\Component\EventDispatcher\GenericEvent;
 
 /**
@@ -37,7 +39,7 @@ use Symfony\Component\EventDispatcher\GenericEvent;
 class StorageEvent extends GenericEvent
 {
     /**
-     * @var \Bolt\Legacy\Content|array
+     * @var Bolt\Content
      */
     protected $subject;
 
@@ -49,10 +51,10 @@ class StorageEvent extends GenericEvent
     /**
      * Instantiate generic Storage Event.
      *
-     * @param \Bolt\Legacy\Content|array $subject   A Content object that is being saved or deleted
-     * @param array                      $arguments Arguments to store in the event.
+     * @param Bolt\Content|array $subject   A Content object that is being saved or deleted
+     * @param array              $arguments Arguments to store in the event.
      */
-    public function __construct($subject = null, array $arguments = [])
+    public function __construct($subject = null, array $arguments = array())
     {
         $this->subject = $subject;
         $this->arguments = $arguments;
@@ -75,16 +77,13 @@ class StorageEvent extends GenericEvent
      */
     public function getContentType()
     {
-        $contentType = $this->getSubject()->contenttype;
-        if ($contentType !== null && isset($contentType['slug'])) {
-            return $contentType['slug'];
-        }
+        return $this->getSubject()->contenttype['slug'];
     }
 
     /**
      * Return the content object.
      *
-     * @return \Bolt\Legacy\Content
+     * @return Bolt\Content
      */
     public function getContent()
     {

@@ -1,8 +1,6 @@
 <?php
 namespace Bolt;
 
-use Silex;
-
 class Pager extends \ArrayObject
 {
     public $for;
@@ -21,7 +19,7 @@ class Pager extends \ArrayObject
 
     protected $app;
 
-    public function __construct($array, Silex\Application $app)
+    public function __construct($array, Application $app)
     {
         foreach ($array as $key => $value) {
             if (is_array($value)) {

@@ -53,8 +53,9 @@ class TextHandler
 
         // Check for Windows to find and replace the %e modifier correctly
         // @see: http://php.net/strftime
-        $os = strtoupper(substr(PHP_OS, 0, 3));
-        $format = $os !== 'WIN' ? $format : preg_replace('#(?<!%)((?:%%)*)%e#', '\1%#d', $format);
+        if (strtoupper(substr(PHP_OS, 0, 3)) == 'WIN') {
+            $format = preg_replace('#(?<!%)((?:%%)*)%e#', '\1%#d', $format);
+        }
 
         // According to http://php.net/manual/en/function.setlocale.php manual
         // if the second parameter is "0", the locale setting is not affected,
@@ -66,7 +67,7 @@ class TextHandler
             // Various things we could do. We could fail miserably, but a more
             // graceful approach is to use the datetime to display a default
             // format
-            $this->app['logger.system']->error('No valid locale detected. Fallback on DateTime active.', ['event' => 'system']);
+            $this->app['logger.system']->error('No valid locale detected. Fallback on DateTime active.', array('event' => 'system'));
 
             return $dateTime->format('Y-m-d H:i:s');
         } else {
@@ -134,6 +135,18 @@ class TextHandler
     {
         json_decode($string, true);
 
-        return json_last_error() === JSON_ERROR_NONE;
+        return (json_last_error() === JSON_ERROR_NONE);
+    }
+
+    /**
+     * UCfirsts the given string.
+     *
+     * @param string $str;
+     *
+     * @return string Same string where first character is in upper case
+     */
+    public function ucfirst($str)
+    {
+        return ucfirst($str);
     }
 }

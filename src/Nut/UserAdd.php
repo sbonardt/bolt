@@ -2,7 +2,6 @@
 
 namespace Bolt\Nut;
 
-use Bolt\Storage\Entity;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -24,8 +23,7 @@ class UserAdd extends BaseCommand
             ->addArgument('displayname', InputArgument::REQUIRED, 'The display name for the new user.')
             ->addArgument('email', InputArgument::REQUIRED, 'The email address for the new user.')
             ->addArgument('password', InputArgument::REQUIRED, 'The password for the new user.')
-            ->addArgument('role', InputArgument::REQUIRED, 'The role you wish to give them.')
-        ;
+            ->addArgument('role', InputArgument::REQUIRED, 'The role you wish to give them.');
     }
 
     /**
@@ -33,41 +31,42 @@ class UserAdd extends BaseCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /** @var \Bolt\Storage\Repository\UsersRepository $repo */
-        $repo = $this->app['storage']->getRepository('Bolt\Storage\Entity\Users');
-        $user = new Entity\Users([
-            'username'    => $input->getArgument('username'),
-            'password'    => $input->getArgument('password'),
-            'email'       => $input->getArgument('email'),
-            'displayname' => $input->getArgument('displayname'),
-            'roles'       => (array) $input->getArgument('role'),
-        ]);
+        $username = $input->getArgument('username');
+        $password = $input->getArgument('password');
+        $email = $input->getArgument('email');
+        $displayname = $input->getArgument('displayname');
+        $role = $input->getArgument('role');
 
-        $message = [];
+        $this->app['users']->getUsers();
+        $user = $this->app['users']->getEmptyUser();
+        $user['roles'] = array($role);
+        $user['username'] = $username;
+        $user['password'] = $password;
+        $user['displayname'] = $displayname;
+        $user['email'] = $email;
+
         $valid = true;
-        if ($repo->getUser($user->getEmail())) {
+        if (! $this->app['users']->checkAvailability('username', $user['username'])) {
             $valid = false;
-            $message[] = ("<error>    * Email address '{$user->getEmail()}' already exists</error>");
+            $output->writeln("<error>Error creating user: username {$user['username']} already exists</error>");
         }
-        if ($repo->getUser($user->getUsername())) {
+        if (! $this->app['users']->checkAvailability('email', $user['email'])) {
             $valid = false;
-            $message[] = ("<error>    * User name '{$user->getUsername()}' already exists</error>");
+            $output->writeln("<error>Error creating user: email {$user['email']} exists</error>");
         }
-        if ($valid === false) {
-            $message[] = ('<error>Error creating user:</error>');
-            $output->write(array_reverse($message), true);
-
-            return;
+        if (! $this->app['users']->checkAvailability('displayname', $user['displayname'])) {
+            $valid = false;
+            $output->writeln("<error>Error creating user: display name {$user['displayname']} already exists</error>");
         }
 
-        try {
-            // Boot all service providers manually as, we're not handling a request
-            $this->app->boot();
-            $this->app['storage']->getRepository('Bolt\Storage\Entity\Users')->save($user);
-            $this->auditLog(__CLASS__, "User created: {$user->getUsername()}");
-            $output->writeln("<info>Successfully created user: {$user->getUsername()}</info>");
-        } catch (\Exception $e) {
-            $output->writeln("<error>Error creating user: {$user->getUsername()}</error>");
+        if ($valid) {
+            $res = $this->app['users']->saveUser($user);
+            if ($res) {
+                $this->auditLog(__CLASS__, "User created: {$user['username']}");
+                $output->writeln("<info>Successfully created user: {$user['username']}</info>");
+            } else {
+                $output->writeln("<error>Error creating user: {$user['username']}</error>");
+            }
         }
     }
 }

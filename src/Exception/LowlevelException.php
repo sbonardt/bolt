@@ -1,8 +1,9 @@
 <?php
 namespace Bolt\Exception;
 
-use Silex\Application;
+use Bolt\Application;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Request;
 
 class LowlevelException extends \Exception
 {
@@ -58,21 +59,18 @@ HTML;
     out. Be sure to include the exact error message you're getting!</p>
 HTML;
 
-    public static $screen;
-
     /**
      * Print a 'low level' error page, and quit. The user has to fix something.
      *
      * Security caveat: the message is inserted into the page unescaped, so
      * make sure that it contains valid HTML with proper encoding applied.
      *
-     * @param string     $message
-     * @param integer    $code
-     * @param \Exception $previous
+     * @param string $message
+     * @param null   $code
+     * @param null   $previous
      */
     public function __construct($message, $code = null, $previous = null)
     {
-        parent::__construct(strip_tags($message), $code, $previous);
         $html = self::$html;
         $info = self::$info;
 
@@ -89,15 +87,11 @@ HTML;
         // expose the information to hosts on the whitelist.
 
         // Determine if we're on the command line. If so, don't output HTML.
-        if (php_sapi_name() === 'cli') {
-            if ($previous instanceof \Exception) {
-                $output .= "\n\nException message:\n" . $previous->getMessage() . "\n\n";
-            }
-
+        if (php_sapi_name() == 'cli') {
             $output = self::cleanHTML($output);
         }
 
-        self::$screen = $output;
+        echo $output;
     }
 
     /**
@@ -140,8 +134,8 @@ HTML;
             }
 
             // Detect if we're being called from a core, an extension or vendor
-            $isBoltCoreError  = strpos($error['file'], $app['resources']->getPath('rootpath/src'));
-            $isVendorError    = strpos($error['file'], $app['resources']->getPath('rootpath/vendor'));
+            $isBoltCoreError  = strpos($error['file'], $app['resources']->getPath('rootpath') . '/src');
+            $isVendorError    = strpos($error['file'], $app['resources']->getPath('rootpath') . '/vendor');
             $isExtensionError = strpos($error['file'], $app['resources']->getPath('extensions'));
 
             // Assemble error trace
@@ -193,8 +187,6 @@ HTML;
 
             echo str_replace($app['resources']->getPath('rootpath'), '', $html);
         }
-
-        echo self::$screen;
     }
 
     /**
@@ -206,20 +198,12 @@ HTML;
     {
     }
 
-    /**
-     * Remove HTML elements from the error output.
-     *
-     * @param string $output
-     *
-     * @return string
-     */
     private static function cleanHTML($output)
     {
-        $output = preg_replace('/<title>.*<\/title>/smi', '', $output);
-        $output = preg_replace('/<style>.*<\/style>/smi', '', $output);
+        $output = preg_replace('/<title>.*<\/title>/smi', "", $output);
+        $output = preg_replace('/<style>.*<\/style>/smi', "", $output);
         $output = strip_tags($output);
         $output = preg_replace('/(\n+)(\s+)/smi', "\n", $output);
-        $output = preg_replace('/&nbsp;/smi', ' ', $output);
 
         return $output;
     }
@@ -228,8 +212,8 @@ HTML;
      * Attempt to rebuild extension autoloader when a "Class not found" error
      * occurs.
      *
-     * @param \Silex\Application $app
-     * @param array              $error
+     * @param \Bolt\Application $app
+     * @param array             $error
      */
     private static function attemptExtensionRecovery($app, $error)
     {
@@ -241,7 +225,6 @@ HTML;
                     header("location: $path?rebuild-done");
                 } elseif (strpos($_SERVER['QUERY_STRING'], 'rebuild-done') !== false) {
                     chdir($cwd);
-
                     return;
                 }
             }

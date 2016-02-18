@@ -9,35 +9,27 @@
 {% endif %}
 
 {% if context.has.relations %}
-    {% include '@bolt/editcontent/_relationships.twig' %}
+    {% include 'editcontent/_relationships.twig' %}
 {% endif %}
 
 {# Output 'incoming' relations #}
-{% set incomingrelations = context.content.relation.incoming(context.content) %}
-{% if incomingrelations is iterable %}
-    <p>{{ __('This record is related to:') }}</p>
-    <div class="buic-listing" data-bolt-widget="buicListing">
-        <table class="table dashboardlisting listing">
-        {% for incoming in incomingrelations %}
-            {% setcontent record = incoming.from_contenttype ~ '/' ~ incoming.from_id %}
-            {% if record %}
-                {% set editable = isallowed('edit', record) %}
-                {% set listing_vars = {
-                    'compact':       true,
-                    'content':       record,
-                    'excerptlength': 280,
-                    'permissions':   {'edit': editable},
-                    'thumbsize':     54,
-                } %}
-                {% include ['@bolt/_sub/_listing.twig'] with listing_vars %}
-            {% endif %}
-        {% endfor %}
+{% for reltype, ids in context.content.relation %}
+    {% if context.contenttype.relations[reltype] is not defined %}
+        <p>{{ __('This record is related to:') }}</p>
+        <table class="table table-striped dashboardlisting">
+            {% for id in ids %}
+                {% setcontent record = reltype ~ '/' ~ id %}
+                {% if record %}
+                    {% set editable = isallowed('edit', record) %}
+                    {% include ['_sub/_listing.twig'] with {'excerptlength': 280, 'thumbsize': 54, 'compact': true, 'content': record, 'permissions': context.permissions} %}
+                {% endif %}
+            {% endfor %}
         </table>
-    </div>
-{% endif %}
+    {% endif %}
+{% endfor %}
 
 {% if context.has.tabs and 'relations' in context.contenttype.groups %}
-    {% include '@bolt/editcontent/_fields.twig' %}{# TODO doesn't exist #}
+    {% include 'editcontent/_fields.twig' %}
 {% endif %}
 
 {% if not context.has.tabs %}

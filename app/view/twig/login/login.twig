@@ -1,13 +1,13 @@
 {# Page: Login #}
-{% extends '@bolt/_base/_page-no_nav.twig' %}
+{% extends '_base/_page-no_nav.twig' %}
 
-{% set form_class = 'col-sm-12 login-block center-block' %}
+{% set form_class = 'login-block center-block' %}
 
 {% block page_title __('page.login.title') %}
 
 {% block page_main %}
 
-    <form method="post" class="submitspinner">
+    <form method="post" role="form" class="submitspinner">
 
         <div class="form-group">
             <label for="username" class="control-label">{{ __('page.login.label.username') }}</label>

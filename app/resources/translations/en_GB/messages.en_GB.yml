@@ -67,6 +67,7 @@
 "Code:": "Code:"
 "Collapse sidebar": "Collapse sidebar"
 "Configuration": "Configuration"
+"Configure Extensions": "Configure Extensions"
 "Content '%title%' could not be deleted.": "Content '%title%' could not be deleted."
 "Content '%title%' could not be modified.": "Content '%title%' could not be modified."
 "Content '%title%' has been changed to '%newStatus%'": "Content '%title%' has been changed to '%newStatus%'"
@@ -169,7 +170,7 @@
 "Next": "Next"
 "No recent %contenttype%.": "No recent %contenttype%."
 "No relations found!": "No relations found!"
-"No results found for '%SEARCHTERM%'. Please try another search.": "No results found for '%SEARCHTERM%'. Please try another search."
+"No results found for '%search%'. Please try another search.": "No results found for '%search%'. Please try another search."
 "No such action for content.": "No such action for content."
 "No such action for user '%s'.": "No such action for user '%s'."
 "None": "None"
@@ -314,7 +315,7 @@
 "View related content": "View related content"
 "View site": "View site"
 "View/edit Templates": "View/edit Templates"
-"Extensions": "Extensions"
+"View/install Extensions": "View/install Extensions"
 "Warning": "Warning"
 "We were unable to generate the theme. It is likely that your theme directory is not writable by Bolt. Check the permissions and try reinstalling.": "reinstalling.\""
 "Written by <em>%name%</em> on %date%": "Written by <em>%name%</em> on %date%"
@@ -348,8 +349,7 @@
 contenttypes.general.choose-an-entry: "Choose an entry"
 general.about-bolt: "About Bolt"
 general.about: "About"
-general.visit-bolt: "Visit Bolt.cm"
-general.bolt-documentation: "Bolt documentation"
+general.bolt-documentation-on-github: "Bolt documentation on GitHub"
 general.bolt-on-github: "Bolt on GitHub"
 general.thanks: "Thanks"
 logs.change-log: "Change Log"
@@ -386,7 +386,7 @@ page.extend.message.checkung-for-updates: "Checking for available updates (this 
 page.extend.message.compatible-unstable-versions: "The versions listed below are compatible with the version of Bolt you are using. Since they are unstable versions, we recommend you <strong>do not</strong> use these on production systems."
 page.extend.message.discover-by-visiting: "You can discover new extensions by visiting"
 page.extend.message.ext-dir-missing: "The extensions directory (<code>%DIRECTORY%</code>) does not exist, or it is not writable. This means that you cannot manage Bolt extensions through the backend; consider managing extensions manually, or changing file permissions to allow Bolt write access to (<code>%DIRECTORY%</code>)."
-page.extend.message.maintenance: "Maintenance"
+page.extend.message.install-all-updates: "Install all updates"
 page.extend.message.installing-selected-package: "Installing selected package version (this may take up to 60 seconds)."
 page.extend.message.installs-all-listed-packages: "This will make sure all packages listed are installed. Use this if you've recently moved to a new server or if you have manually added an extension."
 page.extend.message.installs-updates: "This will install all available updates."
@@ -427,7 +427,6 @@ contenttypes:
             meta: "Meta"
             relations: "Relationships"
             taxonomy: "Taxonomy"
-            template: "Template"
             ungrouped: "Ungrouped"
         invalid-field: "Can't set %field% in %contenttype%: Not a valid field."
         last-modified: "Last modified %contenttypes%"
@@ -457,7 +456,6 @@ field:
         allowed-filetypes: "Allowed file types are:"
         select-from-server: "Select from server"
         select-from-stack: "Select from stack"
-        stack: "Stack"
     geolocation:
         label:
             address-lookup: "Address lookup"
@@ -474,14 +472,10 @@ field:
             markedview: "Markdown"
             preview: "Preview"
     slug:
-        button:
-            edit: "Edit"
-            link: "Link to:"
-            lock: "Lock"
         message:
-            warning: "Editing this field might break existing links to this record!"
+            set: "Set the slug to:"
+            unlock: "Are you sure you wish to unlock the slug? This might break existing links to this record."
         permalink: "Permalink"
-        unique-alias: "Unique alias"
     video:
         button:
             preview: "Preview"

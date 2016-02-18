@@ -16,23 +16,24 @@ class Str
      *
      * @return string
      */
-    public static function makeSafe($str, $strict = false, $extrachars = '')
+    public static function makeSafe($str, $strict = false, $extrachars = "")
     {
-        $str = str_replace('&amp;', '', $str);
+        $slugify = Slugify::create('/([^a-zA-Z0-9] |-)+/u');
+        $str = $slugify->slugify($str);
+        $str = str_replace("&amp;", "", $str);
 
         $delim = '/';
-        if ($extrachars != '') {
+        if ($extrachars != "") {
             $extrachars = preg_quote($extrachars, $delim);
         }
         if ($strict) {
-            $slugify = Slugify::create('/[^a-z0-9_' . $extrachars . ' -]+/');
-            $str = $slugify->slugify($str, '');
-            $str = str_replace(' ', '-', $str);
+            $str = strtolower(str_replace(" ", "-", $str));
+            $regex = "[^a-zA-Z0-9_" . $extrachars . "-]";
         } else {
-            // Allow Uppercase and don't convert spaces to dashes
-            $slugify = Slugify::create('/[^a-zA-Z0-9_.,' . $extrachars . ' -]+/', ['lowercase' => false]);
-            $str = $slugify->slugify($str, '');
+            $regex = "[^a-zA-Z0-9 _.," . $extrachars . "-]";
         }
+
+        $str = preg_replace($delim . $regex . $delim, '', $str);
 
         return $str;
     }

@@ -98,6 +98,7 @@
 "component.changelog-pager.page": # "Page"
 "contenttypes.generic.group.ungrouped": # "Ungrouped"
 "field.geolocation.placeholder.address": # "Street, ZIP code, city or other location"
+"field.slug.message.unlock": # "Are you sure you wish to unlock the slug? This might break existing links to this record."
 "field.video.label.preview": # "Preview image"
 "field.video.pixel": # "pixel"
 "field.video.placeholder.url": # "URL of video on Youtube, Vimeo or other video website"
@@ -182,6 +183,7 @@
 "Code:": "Código"
 "Collapse sidebar": "Minimizar barra lateral"
 "Configuration": "Configurações"
+"Configure Extensions": "Configurar Extensões"
 "Content '%title%' could not be deleted.": "O conteúdo %title% não pode ser excluído."
 "Content '%title%' could not be modified.": "O conteúdo %title% não pode ser modificado."
 "Content '%title%' has been changed to '%newStatus%'": "O conteúdo '%title%' foi alterado para '%newStatus%'"
@@ -267,7 +269,7 @@
 "Modifications needed:": "Modificações necessárias"
 "Modified": "Modificado"
 "No relations found!": "Não há relações encontradas!"
-"No results found for '%SEARCHTERM%'. Please try another search.": "Nenhum resultado encontrado para %SEARCHTERM%. Tente outros termos."
+"No results found for '%search%'. Please try another search.": "Nenhum resultado encontrado para %search%. Tente outros termos."
 "No such action for content.": "Nenhuma ação para este conteúdo"
 "No such action for user '%s'.": "Nenhuma ação para o usuário '%s'."
 "None": "Nenhum"
@@ -388,7 +390,7 @@
 "View related content": "Visualizar conteúdo relacionado"
 "View site": "Visualizar site"
 "View/edit Templates": "Visualizar / alterar Templates"
-"Extensions": "Visualizar/instalar Extensões"
+"View/install Extensions": "Visualizar/instalar Extensões"
 "Written by <em>%name%</em> on %date%": "Escrito por <em>%name%</em> em %date%"
 "You do not have the right privileges to create a new record.": "Você não tem os privilégios corretos para criar um novo registro."
 "You do not have the right privileges to edit that record.": "Você não possui permissões para alterar este registro."
@@ -513,6 +515,8 @@ field:
             marker-placement: "Colocação do marcador"
         matched-address: "Endereços encontrados:"
     slug:
+        message:
+            set: "Define slug para"
         permalink: "Link permanente"
     video:
         button:

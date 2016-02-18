@@ -1,15 +1,50 @@
-Bolt 2.3 DEV-head
------------------
+Bolt 2.2.18
+-----------
 
-Not yet released.
+Released 2016-02-08. Notable changes:
 
- - Lots (list needs to be compiled)
+ - Fix: Fix select fields in templatefields (See #4759)
+ - Fix: Now possible to set a page size for a taxonomy listing (see #4822)
+ - Fix: Viewing a preview of a record clears the unsaved record warning (See #4640)
+ - Fix: Don't use value on checkbox, and set with prop (See #4777)
+ - Change: Allow to set context for custom Twig functions and filters (See #4779)
+ - Change: Update `MenuBuilder.php`, don't do unneeded hydration on menu items. (See #4791)
+ - Fix: Fixes "non-interactive configuration" of composer-install by providing extra vars in composer.json (see #4750)
+ - Fix: Update form_div_layout.html.twig (see #4795)
+
+Bolt 2.2.17
+-----------
+
+Released 2016-01-27. Notable changes:
+
+ - Fix: No href around '…'-placeholders in pagers. (See #4650)
+ - Fix: Templatefields in 'Viewless' records work correctly now (#4653)
+ - Change: Move `NutSP::addCommand` to `$app['nut.commands.add']`` so it's not "static" (#4662)
+ - Fix: Don't whitescreen on a response with a Twig exception (#4668)
+ - Fix: Don't try writing to vendor on composer installs (#4677)
+ - Added: Added capability to set an amount of requested records for specific kind of taxonomy. (#4691)
+ - Change: Generate preview route from url generator. (See #4697)
+ - Change: Add JS events to editfile/editcontent ajax saving. (#4720)
+ - Fix: Block access to .git folders in .htaccess (#4749)
+
+Bolt 2.2.16
+-----------
+
+Released 2016-01-01. Notable changes:
+
+ - Change: Updating .gitignore. Add PHPstorm cruft. (See #4621)
+ - Change: Themes use `theme.yml` now, fallback to old `config.yml` (See #4414)
+ - Fixed: Fixed a 'Catchable Error' in the `record.twig` template for the old 'default' theme (#4645)
+ - Updated: A few Bower / Grunt modules were updated, and all JS / CSS rebuilt (See #4647)
 
 Bolt 2.2.15
 -----------
 
-Not yet released. Notable changes: 
+Released 2015-12-29. Notable changes:
 
+ - Fixed: Exception is no longer thrown when editing an empty config file or template. (See #4636)
+ - Added: Add custom sidebar groups for contenttypes. (Backport of #3793)
+ - Fixed: Don't re-sort taxonomy listing pages, if the taxonomy has `has_sortorder` (See #4601)
  - Fixed: Add JSON to list of denied file types for Apache (See #4610)
  - Fixed: Fix/more spinners and missing icons (See #4573)
  - Fixed: Sidebar Height Resize Issue (See #4573)
@@ -24,8 +59,8 @@ Released 2015-11-27. Notable changes:
  - Fixed: Determine web profiler location using Extension rather than bundle (See #4432)
  - Fixed: No scrolling panes on "View Users" page. (See #4438)
  - Fixed: Limit user agent strings to 128 characters on persist. (See #4413)
- - Fixed: Fix alt and title tags for popup & showimage, height/width for showImage (See #4231)
  - Fixed: Make 'required' for `type: select` fields work. (See: #4420)
+ - Fixed: Fix alt and title tags for popup & showimage, height/width for showImage (See #4231)
  - Fixed: Replace `☰` for `≡ `for better supported unicode on Android. (see #4388)
  - Regex that insert snippets not working when </head> does not starts the line.  #4367
  - Changed: Set `composer/composer` to dev stability. (See #4345)
@@ -33,10 +68,10 @@ Released 2015-11-27. Notable changes:
  - Fixed: Fixing reordering images in an ImageList. (See #3573)
  - Fixed: Retrieve existing relations before setting them from POST. Fixes "No related entries on preview" issue. (See #4340)
  - Fixed: Handle save status transition (See #4326)
- - Added: Allow the `notfound:` status to point to a static template, instead of a contenttype record. 
+ - Added: Allow the `notfound:` status to point to a static template, instead of a contenttype record.
  - Fixed: Don't insert Bolt meta tags on AJAX requests (See #4297)
  - Fixed: Put correct cannonical link into html head on paging content request
- - Fixed: Increase z-index, so popups cover `{{ dump() }}` output. 
+ - Fixed: Increase z-index, so popups cover `{{ dump() }}` output.
 
 Bolt 2.2.13
 -----------
@@ -56,35 +91,6 @@ Released 2015-10-07. Notable changes:
 - Changed: date-time format uses a more i18n-friendly format (See #4053)
 - Changed: Moving 'Install new extension' to the top of the screen.
 - Fixed: Don't sort getContent in listing view, when the contenttype has a taxonomy that has a sortorder.
-- Fixed: Don't show (non working) drag'n'drop in list overviews.
-- Fixed: Fix the info text for imagelist fields (See #4051)
-- Fixed: Fix to #3991 – Geolocation snaps pin to matched address.
-- Fixed: No links for records that are 'viewless'. Fixes #3999 for [2.2]
-- Fixed: [2.2] Allow non-strings as query parameters with pager. issue #4109
-- Fixed: "Timed publish" fixed for SQLITE (Now using a `DateTime` object instead of `CURRENT_TIMESTAMP`)
-- Fixed: Fix: Don't show notice about `mailoptions` when not logged on.
-- Fixed: Alignment of #navpage-secondary menu item icons in FireFox. (See #4178)
-- Fixed: Strip tags from `<title>` in editcontent. Fixes: #3590.
-- Fixed: Fix secondary nav element's class not being output in certain cases.
-
-Bolt 2.2.12
------------
-
-Not yet released. Notable changes:
-
-- Added: Allow height and autocomplete in categories taxonomies.
-- Added: Allow for 'type: hidden' fields in `contenttypes.yml`
-- Added: Allow the theme's `config.yml` to set add_jquery. Fixes #4098
-- Added: Optionally allow spaces in tags.
-- Updated: Updating UIkit(2.22), CodeMirror and Marked.js
-- Changed: Ignore theme directory except for base-* and default
-- Changed: Use tag names instead of slugs for autocomplete and tag cloud. #4125
-- Changed: Strip periods, commas, colons & semi-colons from prefill titles
-- Changed: date-time format uses a more i18n-friendly format (See #4053)
-- Changed: Moving 'Install new extension' to the top of the screen.
-- Fixed: Don't sort getContent in listing view, when the contenttype has a taxonomy that has a sortorder.
-- Fixed: Use hydration for `{{ record.previous() }}` and `{{ record.next() }}`, so routes that use taxonmies in slugs work correctly. (see #4193)
-- Fixed: Don't override "templatechosen" if previously set. Makes sure the correct template is shown in the Twig nub in the Toolbar. (see #4191) 
 - Fixed: Don't show (non working) drag'n'drop in list overviews.
 - Fixed: Fix the info text for imagelist fields (See #4051)
 - Fixed: Fix to #3991 – Geolocation snaps pin to matched address.
@@ -142,7 +148,6 @@ Released 2015-07-31. Notable changes:
 - Updated: `squizlabs/php_codesniffer` requirement to `~2.0` due to upstream changes.
 - Fixed: Send storage event in publishTimedRecords (see #3879)
 - Fixed: Memory leak / loop in "new content" (see #3883)
-
 
 Bolt 2.2.5
 ----------
@@ -343,7 +348,6 @@ Released 2015-04-29. Notable changes:
  - Fixed: `attrib` for images. (See #3487)
  - Fixed: Fix pagination for searching via `getContent()`` or `{% setcontent %}`. (See #3496)
  - Fixed: Use 'alt' instead of 'title' in Image fieldtype's attributes. (See #3505)
-
 
 Bolt 2.1.8
 ----------

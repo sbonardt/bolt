@@ -15,10 +15,10 @@
                 <tr>
                     <td>{{ session.username }}</td>
                     <td>
-                        {{ buic.moment(session.lastseen) }}
+                        <time class="moment" datetime="{{ session.lastseen|date("c") }}" title="{{ session.lastseen }}">{{ session.lastseen }}</time>
                     </td>
                     <td>
-                        {{ buic.moment(session.validity) }}
+                        <time class="moment" datetime="{{ session.validity|date("c") }}" title="{{ session.validity }}">{{ session.validity }}</time>
                     </td>
                     <td>
                         {{ session.ip }}

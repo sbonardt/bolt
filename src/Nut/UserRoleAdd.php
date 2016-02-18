@@ -20,8 +20,7 @@ class UserRoleAdd extends BaseCommand
             ->setName('role:add')
             ->setDescription('Add a certain role to a user.')
             ->addArgument('username', InputArgument::REQUIRED, 'The username (loginname) you wish to add a role to.')
-            ->addArgument('role', InputArgument::REQUIRED, 'The role you wish to give them.')
-        ;
+            ->addArgument('role', InputArgument::REQUIRED, 'The role you wish to give them.');
     }
 
     /**

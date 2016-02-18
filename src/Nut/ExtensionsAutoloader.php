@@ -1,6 +1,7 @@
 <?php
 namespace Bolt\Nut;
 
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -18,8 +19,7 @@ class ExtensionsAutoloader extends BaseCommand
     {
         $this
             ->setName('extensions:autoloader')
-            ->setDescription('Update the extensions autoloader.')
-        ;
+            ->setDescription('Update the extensions autoloader.');
     }
 
     /**

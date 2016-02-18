@@ -2,7 +2,7 @@
 
 namespace Bolt\Nut;
 
-use Bolt\Cron;
+use Bolt\Controllers\Cron;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -19,12 +19,11 @@ class CronRunner extends BaseCommand
      */
     protected function configure()
     {
-        $interims = ['  - cron.Hourly', '  - cron.Daily', '  - cron.Weekly', '  - cron.Monthly', '  - cron.Yearly'];
+        $interims = array('  - cron.Hourly', '  - cron.Daily', '  - cron.Weekly', '  - cron.Monthly', '  - cron.Yearly');
         $this
             ->setName('cron')
             ->setDescription('Cron virtual daemon')
-            ->addOption('run', null, InputOption::VALUE_REQUIRED, "Run a particular interim's jobs:\n" . implode("\n", $interims))
-        ;
+            ->addOption('run', null, InputOption::VALUE_REQUIRED, "Run a particular interim's jobs:\n" . implode("\n", $interims));
     }
 
     /**
@@ -34,26 +33,25 @@ class CronRunner extends BaseCommand
     {
         if ($input->getOption('run')) {
             $event = $input->getOption('run');
-            $param = [
+            $param = array(
                 'run'   => true,
-                'event' => $event,
-            ];
+                'event' => $event
+            );
         } else {
-            $event = false;
-            $param = [
+            $param = array(
                 'run'   => false,
-                'event' => '',
-            ];
+                'event' => ''
+            );
         }
 
-        $result = new Cron($this->app, $output);
-        if ($result->execute($param)) {
+        $result = new Cron($this->app, $output, $param);
+        if ($result) {
             if ($event) {
                 $this->auditLog(__CLASS__, "Cron $event job run");
             } else {
                 $this->auditLog(__CLASS__, 'Cron run');
             }
-            $output->writeln('<info>Cron run!</info>');
+            $output->writeln("<info>Cron run!</info>");
         }
     }
 }

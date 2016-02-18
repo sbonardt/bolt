@@ -1,48 +1,40 @@
 <?php
-
 namespace Bolt\Events;
 
 use Silex\Application;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\EventDispatcher\Event;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Event class for system compulsory cron jobs.
  */
 class CronEvent extends Event
 {
-    /** @var \Silex\Application */
+    /**
+     * @var \Silex\Application
+     */
     private $app;
 
-    /** @var \Symfony\Component\Console\Output\OutputInterface */
+    /**
+     * @var \Symfony\Component\Console\Output\OutputInterface
+     */
     public $output;
 
-    /**
-     * Constructor.
-     *
-     * @param Application     $app
-     * @param OutputInterface $output
-     */
     public function __construct(Application $app, OutputInterface $output = null)
     {
         $this->app = $app;
         $this->output = $output;
 
         // Add listeners
-        $this->app['dispatcher']->addListener(CronEvents::CRON_HOURLY, [$this, 'doRunScheduledJobs']);
-        $this->app['dispatcher']->addListener(CronEvents::CRON_DAILY, [$this, 'doRunScheduledJobs']);
-        $this->app['dispatcher']->addListener(CronEvents::CRON_WEEKLY, [$this, 'doRunScheduledJobs']);
-        $this->app['dispatcher']->addListener(CronEvents::CRON_MONTHLY, [$this, 'doRunScheduledJobs']);
-        $this->app['dispatcher']->addListener(CronEvents::CRON_YEARLY, [$this, 'doRunScheduledJobs']);
+        $this->app['dispatcher']->addListener(CronEvents::CRON_HOURLY, array($this, 'doRunScheduledJobs'));
+        $this->app['dispatcher']->addListener(CronEvents::CRON_DAILY, array($this, 'doRunScheduledJobs'));
+        $this->app['dispatcher']->addListener(CronEvents::CRON_WEEKLY, array($this, 'doRunScheduledJobs'));
+        $this->app['dispatcher']->addListener(CronEvents::CRON_MONTHLY, array($this, 'doRunScheduledJobs'));
+        $this->app['dispatcher']->addListener(CronEvents::CRON_YEARLY, array($this, 'doRunScheduledJobs'));
     }
 
-    /**
-     * Process jobs.
-     *
-     * @param Event  $event
-     * @param string $eventName
-     */
-    public function doRunScheduledJobs(Event $event, $eventName)
+    public function doRunScheduledJobs(Event $event, $eventName, EventDispatcherInterface $dispatcher)
     {
         switch ($eventName) {
             case CronEvents::CRON_HOURLY:
@@ -84,8 +76,8 @@ class CronEvent extends Event
     private function cronWeekly()
     {
         // Clear the cache
-        $this->app['cache']->doFlush();
-        $this->notify('Clearing cache');
+        $this->app['cache']->clearCache();
+        $this->notify("Clearing cache");
 
         // Trim system log files
         $this->app['logger.manager']->trim('system');
@@ -93,7 +85,7 @@ class CronEvent extends Event
         // Trim change log files
         $this->app['logger.manager']->trim('change');
 
-        $this->notify('Trimming logs');
+        $this->notify("Trimming logs");
     }
 
     /**

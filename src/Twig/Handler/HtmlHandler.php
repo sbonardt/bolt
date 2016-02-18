@@ -2,9 +2,9 @@
 
 namespace Bolt\Twig\Handler;
 
+use Bolt\Application;
 use Bolt\Helpers\Html;
 use Bolt\Helpers\Str;
-use Bolt\Legacy\Content;
 use Maid\Maid;
 use Silex;
 
@@ -27,26 +27,6 @@ class HtmlHandler
     }
 
     /**
-     * Take a file name and add a HTML query paramter with a unique hash based
-     * on the site's salt value and the file modification time, or file name
-     * if the file can't be found by the function.
-     *
-     * @param string $fileName
-     *
-     * @return string
-     */
-    public function cacheHash($fileName)
-    {
-        $fullPath = $this->app['resources']->getPath('root') . '/' . $fileName;
-
-        if (is_readable($fullPath)) {
-            return "$fileName?v=" . $this->app['asset.file.hash.factory']($fullPath);
-        } elseif (is_readable($fileName)) {
-            return "$fileName?v=" . $this->app['asset.file.hash.factory']($fileName);
-        }
-    }
-
-    /**
      * Transforms plain text to HTML
      *
      * @see Bolt\Helpers\Html::decorateTT()
@@ -63,14 +43,14 @@ class HtmlHandler
     /**
      * Makes a piece of HTML editable.
      *
-     * @param string               $html    The HTML to be editable
-     * @param \Bolt\Legacy\Content $content The actual content
-     * @param string               $field
-     * @param boolean              $safe
+     * @param string        $html    The HTML to be editable
+     * @param \Bolt\Content $content The actual content
+     * @param string        $field
+     * @param boolean       $safe
      *
      * @return string
      */
-    public function editable($html, Content $content, $field, $safe)
+    public function editable($html, $content, $field, $safe)
     {
         // Editing content from within content? NOPE NOPE NOPE.
         if ($safe) {
@@ -99,7 +79,7 @@ class HtmlHandler
      */
     public function htmlLang()
     {
-        return str_replace('_', '-', $this->app['locale']);
+        return str_replace('_', '-', $this->app['config']->get('general/locale', Application::DEFAULT_LOCALE));
     }
 
     /**
@@ -133,17 +113,17 @@ class HtmlHandler
 
         $config = $this->app['config']->get('general/htmlcleaner');
         $allowed_tags = !empty($config['allowed_tags']) ? $config['allowed_tags'] :
-            ['div', 'p', 'br', 'hr', 's', 'u', 'strong', 'em', 'i', 'b', 'li', 'ul', 'ol', 'blockquote', 'pre', 'code', 'tt', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'dd', 'dl', 'dh', 'table', 'tbody', 'thead', 'tfoot', 'th', 'td', 'tr', 'a', 'img'];
+            array('div', 'p', 'br', 'hr', 's', 'u', 'strong', 'em', 'i', 'b', 'li', 'ul', 'ol', 'blockquote', 'pre', 'code', 'tt', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'dd', 'dl', 'dh', 'table', 'tbody', 'thead', 'tfoot', 'th', 'td', 'tr', 'a', 'img');
         $allowed_attributes = !empty($config['allowed_attributes']) ? $config['allowed_attributes'] :
-            ['id', 'class', 'name', 'value', 'href', 'src'];
+            array('id', 'class', 'name', 'value', 'href', 'src');
 
         // Sanitize/clean the HTML.
         $maid = new Maid(
-            [
+            array(
                 'output-format'   => 'html',
                 'allowed-tags'    => $allowed_tags,
-                'allowed-attribs' => $allowed_attributes,
-            ]
+                'allowed-attribs' => $allowed_attributes
+            )
         );
         $output = $maid->clean($output);
 
@@ -161,7 +141,7 @@ class HtmlHandler
      *
      * @return string|null
      */
-    public function menu(\Twig_Environment $env, $identifier = '', $template = '_sub_menu.twig', $params = [], $safe)
+    public function menu(\Twig_Environment $env, $identifier = '', $template = '_sub_menu.twig', $params = array(), $safe)
     {
         if ($safe) {
             return null;
@@ -170,10 +150,10 @@ class HtmlHandler
         /** @var \Bolt\Helpers\Menu $menu */
         $menu = $this->app['menu']->menu($identifier);
 
-        $twigvars = [
+        $twigvars = array(
             'name' => $menu->getName(),
-            'menu' => $menu->getItems(),
-        ];
+            'menu' => $menu->getItems()
+        );
 
         // If $params is not empty, merge it with twigvars.
         if (!empty($params) && is_array($params)) {
@@ -216,7 +196,7 @@ class HtmlHandler
      *
      * @return string Twig output
      */
-    public function twig($snippet, $extravars = [])
+    public function twig($snippet, $extravars = array())
     {
         return $this->app['safe_render']->render($snippet, $extravars)->getContent();
     }

@@ -2,7 +2,7 @@
 
 namespace Bolt\Nut;
 
-use Silex\Application;
+use Bolt\Application;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -11,12 +11,12 @@ use Symfony\Component\HttpFoundation\Request;
  */
 abstract class BaseCommand extends Command
 {
-    /** @var \Silex\Application */
+    /** @var \Bolt\Application */
     protected $app;
 
     /**
-     * @param \Silex\Application $app
-     * @param Request            $request Reserved for tests
+     * @param \Bolt\Application $app
+     * @param Request           $request Reserved for tests
      */
     public function __construct(Application $app, Request $request = null)
     {
@@ -29,7 +29,7 @@ abstract class BaseCommand extends Command
          *   Accessed request service outside of request scope. Try moving that
          *   call to a before handler or controller
          */
-        $app['request'] = $request ?: Request::createFromGlobals();
+        $app['request'] = $request ? : Request::createFromGlobals();
     }
 
     /**
@@ -41,7 +41,7 @@ abstract class BaseCommand extends Command
     protected function auditLog($source, $message)
     {
         if ($this->app['config']->get('general/auditlog/enabled', true)) {
-            $this->app['logger.system']->info($message, ['event' => 'nut', 'source' => $source]);
+            $this->app['logger.system']->info($message, array('event' => 'nut', 'source' => $source));
         }
     }
 }

@@ -2,9 +2,9 @@
 
 namespace Bolt\Helpers;
 
+use Bolt\Application;
+use Bolt\Library as Lib;
 use Bolt\Translation\Translator as Trans;
-use GuzzleHttp\Url;
-use Silex\Application;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 class MenuBuilder
@@ -33,7 +33,7 @@ class MenuBuilder
         }
 
         if (!is_array($menu)) {
-            $menu = [];
+            $menu = array();
         }
 
         if (!$resolved) {
@@ -90,40 +90,15 @@ class MenuBuilder
         }
 
         if (isset($item['route'])) {
-            $item['link'] = $this->resolveRouteToLink($item);
+            $param = !empty($item['param']) ?: array();
+            $add = !empty($item['add']) ?: '';
+
+            $item['link'] = Lib::path($item['route'], $param, $add);
         } elseif (isset($item['path'])) {
             $item = $this->resolvePathToContent($item);
         }
 
         return $item;
-    }
-
-    /**
-     * Resolve the route to a generated url
-     *
-     * @param array $item
-     *
-     * @return string
-     */
-    private function resolveRouteToLink(array $item)
-    {
-        $param = !empty($item['param']) ? $item['param'] : [];
-
-        if (isset($item['add'])) {
-            $this->app['logger.system']->warning(
-                Trans::__('Menu item property "add" is deprecated. Use "#" under "param" instead.'),
-                ['event' => 'deprecated']
-            );
-            $add = $item['add'];
-            if (!empty($add) && $add[0] !== '?') {
-                $add = '?' . $add;
-            }
-            $url = Url::fromString($add);
-            $param = array_merge($param, $url->getQuery()->toArray());
-            $param['#'] = $url->getFragment();
-        }
-
-        return $this->app['url_generator']->generate($item['route'], $param);
     }
 
     /**
@@ -147,9 +122,9 @@ class MenuBuilder
             $this->app['logger.system']->error(
                 Trans::__(
                     'Invalid menu path (%PATH%) set in menu.yml. Probably should be a link: instead!',
-                    ['%PATH%' => $item['path']]
+                    array('%PATH%' => $item['path'])
                 ),
-                ['event' => 'config']
+                array('event' => 'config')
             );
 
             return $item;
@@ -164,6 +139,7 @@ class MenuBuilder
         try {
             // See if we have a 'content/id' or 'content/slug' path
             if (preg_match('#^([a-z0-9_-]+)/([a-z0-9_-]+)$#i', $path)) {
+
                 // Determine if the provided path first matches any routes
                 // that we have, this will catch any valid configured
                 // contenttype slug and record combination, or throw a
@@ -178,9 +154,9 @@ class MenuBuilder
             $this->app['logger.system']->error(
                 Trans::__(
                     'Invalid menu path (%PATH%) set in menu.yml. Does not match any configured contenttypes or routes.',
-                    ['%PATH%' => $item['path']]
+                    array('%PATH%' => $item['path'])
                 ),
-                ['event' => 'config']
+                array('event' => 'config')
             );
         }
 
@@ -197,8 +173,8 @@ class MenuBuilder
      */
     private function populateItemFromRecord(array $item, $path)
     {
-        /** @var \Bolt\Legacy\Content $content */
-        $content = $this->app['storage']->getContent($path);
+        /** @var \Bolt\Content $content */
+        $content = $this->app['storage']->getContent($path, array('hydrate' => false));
 
         if ($content) {
             if (empty($item['label'])) {

@@ -6,8 +6,6 @@ use Silex;
 
 /**
  * Resolves extensions being used as a controller.
- *
- * @author Carson Full <carsonfull@gmail.com>
  */
 class ControllerResolver extends Silex\ControllerResolver
 {

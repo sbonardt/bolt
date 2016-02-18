@@ -17,8 +17,7 @@ class DatabaseCheck extends BaseCommand
     {
         $this
             ->setName('database:check')
-            ->setDescription('Check the database for missing tables and/or columns.')
-        ;
+            ->setDescription('Check the database for missing tables and/or columns.');
     }
 
     /**
@@ -26,17 +25,16 @@ class DatabaseCheck extends BaseCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        /** @var $response \Bolt\Storage\Database\Schema\SchemaCheck */
-        $response = $this->app['schema']->check();
+        $messages = $this->app['integritychecker']->checkTablesIntegrity();
 
-        if (!$response->hasResponses()) {
-            $output->writeln('<info>The database is OK.</info>');
-        } else {
-            $output->writeln('<comment>Modifications required:</comment>');
-            foreach ($response->getResponseStrings() as $messages) {
-                $output->writeln('<info> - ' . $messages . '</info>');
+        if (!empty($messages)) {
+            $output->writeln("<info>Modifications required:</info>");
+            foreach ($messages as $line) {
+                $output->writeln(" - " . str_replace("tt>", "info>", $line) . "");
             }
-            $output->writeln("<comment>One or more fields/tables are missing from the Database. Please run 'nut database:update' to fix this.</comment>");
+            $output->writeln("\nOne or more fields/tables are missing from the Database. Please run 'nut database:update' to fix this.");
+        } else {
+            $output->writeln("\nThe database is OK.");
         }
     }
 }

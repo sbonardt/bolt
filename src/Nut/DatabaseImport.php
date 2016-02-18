@@ -2,11 +2,11 @@
 
 namespace Bolt\Nut;
 
-use Bolt\Storage\Migration\Import;
+use Bolt\Database\Migration\Import;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Symfony\Component\HttpFoundation\File\File;
 
 /**
  * Nut database importer command
@@ -15,14 +15,19 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 class DatabaseImport extends BaseCommand
 {
+    /** @var array YAML to import to records */
+    private $yaml = array();
+
+    /** @var array Contenttypes in use */
+    private $contenttypes = array();
+
     protected function configure()
     {
         $this
             ->setName('database:import')
             ->setDescription('[EXPERIMENTAL] Import database records from a YAML or JSON file')
             ->addOption('no-interaction', 'n', InputOption::VALUE_NONE, 'Do not ask for confirmation')
-            ->addOption('file',           'f', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'A YAML or JSON file to use for import data. Must end with .yml, .yaml or .json')
-        ;
+            ->addOption('file',           'f', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'A YAML or JSON file to use for import data. Must end with .yml, .yaml or .json');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output)
@@ -92,12 +97,12 @@ class DatabaseImport extends BaseCommand
      */
     private function checkContinue(InputInterface $input, OutputInterface $output)
     {
-        /** @var \Symfony\Component\Console\Helper\QuestionHelper $helper */
-        $helper = $this->getHelper('question');
+        /** @var \Composer\Command\Helper\DialogHelper $dialog */
+        $dialog   = $this->getHelperSet()->get('dialog');
         $confirm  = $input->getOption('no-interaction');
-        $question = new ConfirmationQuestion('<question>Are you sure you want to continue with the import?</question> ');
+        $question = '<question>Are you sure you want to continue with the import?</question> ';
 
-        if (!$confirm && !$helper->ask($input, $output, $question)) {
+        if (!$confirm && !$dialog->askConfirmation($output, $question, false)) {
             return false;
         }
 

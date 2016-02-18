@@ -20,10 +20,9 @@ class ExtensionsDisable extends BaseCommand
     {
         $this
             ->setName('extensions:disable')
-            ->setAliases(['extensions:uninstall'])
+            ->setAliases(array('extensions:uninstall'))
             ->setDescription('Uninstalls an extension.')
-            ->addArgument('name', InputArgument::REQUIRED, 'Name of the extension to uninstall')
-        ;
+            ->addArgument('name', InputArgument::REQUIRED, 'Name of the extension to uninstall');
     }
 
     /**
@@ -32,7 +31,7 @@ class ExtensionsDisable extends BaseCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $name = $input->getArgument('name');
-        $result = $this->app['extend.manager']->removePackage([$name]);
+        $result = $this->app['extend.manager']->removePackage(array($name));
 
         if ($result === 0) {
             $this->auditLog(__CLASS__, "Removed extension $name");

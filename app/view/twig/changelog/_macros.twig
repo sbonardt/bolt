@@ -22,16 +22,15 @@
 {% endmacro %}
 
 {% macro changelog_details(entry) %}
-    {% import '@bolt/_macro/_macro.twig' as macro %}
-    {% import '@bolt/_macro/_buic.twig' as buic %}
+    {% import '_macro/_macro.twig' as macro %}
 
     {% set preview_w = 200 %}
     {% set preview_h = 150 %}
 
     <h3>
-        "<a href="{{ path('editcontent', {'contenttypeslug': entry.contenttype, 'id': entry.contentid}) }}">{{ entry.title }}</a>"
-        <em><span class="time">{{ _self.changelog_mutation(entry.mutation_type) }} {{ buic.moment(entry.date) }}</span>
-        {{ __('component.changelog-detail.by') }}</em> <strong>{{ macro.userlink(entry.ownerid|default('')) }}</strong>
+        "{{ entry.title }}"
+        {{ _self.changelog_mutation(entry.mutation_type) }}
+        {{ __('component.changelog-detail.by') }} <strong>{{ entry.username }}</strong>
     </h3>
 
     <div class="changelog-details">
@@ -40,11 +39,16 @@
         </div>
 
         <div class="body">
-            <p>
-                {% if config.get('general/changelog/enabled') %}
-                    {% if entry.comment %}<h4><strong>Comment</strong>: {{ entry.comment }}</h4>{% endif %}
+            <div class="time">
+                <p>
+                    <span>{{ _self.changelog_mutation(entry.mutation_type) }} {{ macro.datetime(entry.date) }}</span>
+                    {{ __('component.changelog-detail.by') }} <strong>{{ entry.username }}</strong>
+                </p>
+                {% if ischangelogenabled() %}
+                    {% if entry.comment|default(false) %}<h4><strong>Comment</strong>: {{ entry.comment }}</h4>{% endif %}
                 {% endif %}
-            </p>
+            </div>
+
 
             <table class="table table-bordered table-condensed table-changelog-details">
                 <thead>
